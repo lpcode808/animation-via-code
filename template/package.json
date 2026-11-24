@@ -1,0 +1,7 @@
+{
+  "name": "animation-via-code-template",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "dependencies": { "playwright": "^1.50.0" }
+}

@@ -1,0 +1,9 @@
+node_modules/
+__pycache__/
+frames/
+work/
+*.wav
+contact.jpg
+cues.json
+template/out.mp4
+.DS_Store

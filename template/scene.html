@@ -1,0 +1,87 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>scene</title>
+<style>html,body{margin:0;background:#111}canvas{display:block}</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// Every frame is a pure function of time: renderAt(t) draws the same picture
+// for the same t, no matter what was drawn before. No requestAnimationFrame state.
+const W = 1920, H = 1080, DURATION = 6;
+const ctx = document.getElementById('c').getContext('2d');
+
+// One timeline drives picture, captions and sound.
+// Beats are timed to the physics below: the first landing (about 2.4 s) falls inside beat 2.
+const BEATS = [
+  { start: 0.0, end: 1.3, caption: 'A ball is dropped.' },
+  { start: 1.3, end: 2.6, caption: 'It speeds up as it falls.' },
+  { start: 2.6, end: 6.0, caption: 'Each bounce loses height.' },
+];
+// Physics constants, shared by the drawing and the sound cues.
+const G = 400, FLOOR = 660, TOP = 140, E = 0.6, DROP_AT = 0.8;   // px/s², px, px, bounce factor, s
+// The floor sits well above the caption panel (y 810 to 910), so the resting ball is never covered.
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = u => u * u * (3 - 2 * u);
+
+// Height of the ball at time t (simple physics, computed from t, never accumulated).
+function ballY(t) {
+  const g = G, floor = FLOOR, top = TOP, e = E;
+  let h = floor - top, tt = t - DROP_AT;
+  if (tt < 0) return top;
+  let fall = Math.sqrt(2 * h / g);
+  if (tt < fall) return top + 0.5 * g * tt * tt;
+  tt -= fall;
+  let v = g * fall * e;                              // speed after each bounce
+  while (v > 30) {
+    const flight = 2 * v / g;
+    if (tt < flight) return floor - (v * tt - 0.5 * g * tt * tt);
+    tt -= flight; v *= e;
+  }
+  return floor;
+}
+
+// Sound cues come from the picture: the renderer collects them into cues.json.
+window.__cues = [];
+function cue(t, type) { window.__cues.push({ t, type }); }
+// Precompute bounce times once (pure: depends only on the physics above).
+(function () {
+  const g = G, h = FLOOR - TOP, e = E;
+  let t = DROP_AT + Math.sqrt(2 * h / g), v = g * Math.sqrt(2 * h / g) * e;
+  while (v > 30 && t < DURATION) { cue(t, 'bounce'); t += 2 * v / g; v *= e; }
+  BEATS.forEach(b => cue(b.start, 'tick'));
+})();
+
+function caption(text, alpha) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;            // multiply, never set: see guide/3-scene.md
+  ctx.font = '600 74px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  const w = ctx.measureText(text).width + 80;
+  ctx.fillRect((W - w) / 2, 880 - 70, w, 100);   // stays above the bottom 15%
+  ctx.fillStyle = '#fff';
+  ctx.fillText(text, W / 2, 880);
+  ctx.restore();
+}
+
+window.renderAt = function (t) {
+  ctx.fillStyle = '#16202b'; ctx.fillRect(0, 0, W, H);
+  // floor
+  ctx.fillStyle = '#2d3e50'; ctx.fillRect(0, FLOOR, W, 30);
+  // ball, with a speed-dependent squash shadow
+  const y = ballY(t);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  const s = 1 - (FLOOR - y) / 900;
+  ctx.beginPath(); ctx.ellipse(W / 2, FLOOR + 2, 60 * s, 12 * s, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#f2b134';
+  ctx.beginPath(); ctx.arc(W / 2, y - 30, 30, 0, 7); ctx.fill();
+  // captions fade in/out over 0.25 s using the beat's local time
+  for (const b of BEATS) {
+    if (t < b.start || t >= b.end) continue;
+    const a = Math.min(clamp((t - b.start) / 0.25), clamp((b.end - t) / 0.25));
+    caption(b.caption, ease(a));
+  }
+};
+window.DURATION = DURATION;
+// Tell the renderer we're ready only after fonts have loaded.
+document.fonts.ready.then(() => { renderAt(0); window.__ready = true; });
+</script></body></html>
