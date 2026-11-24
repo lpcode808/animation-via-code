@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animation via code</title>
+<meta name="description" content="Notes, prompts, a template and three demos for making short explainer videos by having an AI coding agent write code that draws every frame.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Courier+Prime:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --paper: oklch(0.965 0.018 85);
+  --paper-2: oklch(0.93 0.025 85);
+  --paper-3: oklch(0.89 0.03 85);
+  --ink: oklch(0.24 0.03 255);
+  --ink-2: oklch(0.42 0.03 255);
+  --ink-3: oklch(0.55 0.025 255);
+  --rule: oklch(0.8 0.045 235);
+  --rule-soft: oklch(0.88 0.03 235);
+  --pencil: oklch(0.56 0.18 28);
+  --pencil-soft: oklch(0.92 0.04 28);
+  --sage: oklch(0.5 0.08 155);
+
+  --display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+  --body: "Literata", Georgia, serif;
+  --mono: "Courier Prime", "Courier New", monospace;
+
+  --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 48px; --s6: 96px;
+  --gutter: clamp(16px, 4vw, 56px);
+  --ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1.0625rem/1.6 var(--body);
+  font-optical-sizing: auto;
+}
+a { color: var(--ink); text-decoration-color: var(--rule); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--pencil); }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--pencil); outline-offset: 3px; }
+code, kbd { font-family: var(--mono); font-size: 0.92em; background: var(--paper-2); padding: 0 0.25em; border-radius: 2px; }
+p { margin: 0 0 var(--s3); max-width: 68ch; }
+h1, h2, h3, h4 { font-family: var(--display); line-height: 1.05; margin: 0; letter-spacing: -0.01em; }
+
+/* ---------- the exposure-sheet frame: a gutter column of frame numbers ---------- */
+.wrap { max-width: 78rem; margin: 0 auto; padding: 0 var(--gutter); }
+.sheet {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  border-top: 1px solid var(--rule);
+}
+.sheet > .fr {
+  font: 700 0.8rem/1 var(--mono);
+  color: var(--ink-3);
+  padding-top: var(--s5);
+  border-right: 1px solid var(--rule);
+  letter-spacing: 0.04em;
+}
+.sheet > .fr span { display: block; color: var(--pencil); margin-bottom: var(--s1); }
+.sheet > .cell { padding: var(--s5) 0 var(--s6) var(--s4); min-width: 0; }
+@media (max-width: 720px) {
+  .sheet { grid-template-columns: 1fr; }
+  .sheet > .fr { border-right: 0; padding-top: var(--s4); }
+  .sheet > .cell { padding: var(--s3) 0 var(--s5); }
+}
+.kicker { font: 700 0.8rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--pencil); margin-bottom: var(--s3); }
+h2 { font-size: clamp(1.9rem, 3.6vw, 2.9rem); font-weight: 800; margin-bottom: var(--s4); max-width: 22ch; }
+h3 { font-size: 1.35rem; font-weight: 700; }
+
+/* ---------- top bar ---------- */
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); padding: var(--s3) 0; font: 400 0.9rem/1.3 var(--mono); color: var(--ink-2); flex-wrap: wrap; }
+.top nav { display: flex; gap: var(--s4); flex-wrap: wrap; }
+.top a { text-decoration: none; }
+.top a:hover { color: var(--pencil); }
+
+/* ---------- hero ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--s5); align-items: end; padding: var(--s5) 0 var(--s5); }
+@media (max-width: 960px) { .hero { grid-template-columns: 1fr; gap: var(--s4); } }
+.hero h1 { font-size: clamp(3rem, 8.5vw, 6.6rem); font-weight: 800; line-height: 0.9; letter-spacing: -0.035em; margin-bottom: var(--s4); }
+.hero h1 em { font-style: normal; color: var(--pencil); }
+.lede { font-size: 1.2rem; line-height: 1.5; max-width: 34ch; }
+.lede-2 { color: var(--ink-2); max-width: 46ch; }
+.hero .go { display: flex; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s4); }
+.btn {
+  font: 700 0.95rem/1 var(--mono); padding: 0.85em 1.1em; border-radius: 3px; text-decoration: none; cursor: pointer;
+  border: 1.5px solid var(--ink); background: var(--ink); color: var(--paper);
+  transition: transform 160ms var(--ease);
+}
+.btn:hover { transform: translateY(-1px); }
+.btn.quiet { background: transparent; color: var(--ink); }
+
+/* the scrubbable frame */
+.viewer { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 4px; padding: var(--s3); }
+.viewer canvas { width: 100%; height: auto; display: block; border-radius: 2px; background: var(--paper); }
+.scrub { display: grid; grid-template-columns: auto 1fr; gap: var(--s3); align-items: center; margin-top: var(--s3); }
+.play { width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; font: 700 0.85rem/1 var(--mono); }
+.track { position: relative; height: 2.6rem; }
+.track input { position: absolute; inset: 0; width: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+.track .bar { position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: var(--rule); }
+.track .fill { position: absolute; left: 0; top: 50%; height: 2px; background: var(--ink); }
+.track .head { position: absolute; top: 18%; bottom: 18%; width: 3px; background: var(--pencil); margin-left: -1.5px; }
+.track .tick { position: absolute; top: 30%; bottom: 30%; width: 1px; background: var(--ink-3); }
+.track .tick.beat { top: 15%; bottom: 15%; background: var(--rule); width: 2px; }
+.readout { display: flex; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s2); font: 400 0.85rem/1.3 var(--mono); color: var(--ink-2); }
+.readout b { color: var(--ink); font-weight: 700; }
+.legend-inline { font: 400 0.8rem/1.3 var(--mono); color: var(--ink-3); margin-top: var(--s2); }
+.legend-inline i { display: inline-block; width: 2px; height: 0.9em; vertical-align: -0.1em; margin: 0 0.35em 0 0.8em; background: var(--ink-3); }
+.legend-inline i.b { background: var(--rule); width: 3px; }
+.legend-inline i:first-child { margin-left: 0; }
+
+/* ---------- grown vs built ---------- */
+.versus { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--rule); margin: var(--s4) 0; max-width: 60rem; }
+.versus > div { padding: var(--s4); }
+.versus > div + div { border-left: 1px solid var(--rule); background: var(--paper-2); }
+.versus h3 { margin-bottom: var(--s2); }
+.versus p { margin: 0; color: var(--ink-2); }
+@media (max-width: 640px) { .versus { grid-template-columns: 1fr; } .versus > div + div { border-left: 0; border-top: 1px solid var(--rule); } }
+
+/* ---------- pipeline ---------- */
+.pipe { list-style: none; padding: 0; margin: var(--s4) 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); counter-reset: step; max-width: 66rem; }
+.pipe li { counter-increment: step; padding: var(--s3) var(--s3) var(--s3) 0; border-top: 2px solid var(--ink); position: relative; }
+.pipe li + li { padding-left: var(--s3); border-left: 1px dashed var(--rule); }
+.pipe li::before { content: counter(step, decimal-leading-zero); display: block; font: 700 0.8rem/1 var(--mono); color: var(--pencil); margin-bottom: var(--s2); }
+.pipe b { display: block; font-family: var(--display); font-size: 1.08rem; line-height: 1.15; margin-bottom: var(--s1); }
+.pipe span { font-size: 0.92rem; color: var(--ink-2); line-height: 1.4; display: block; }
+@media (max-width: 900px) {
+  .pipe { grid-template-columns: 1fr 1fr; }
+  .pipe li, .pipe li + li { border-left: 0; padding-left: 0; padding-right: var(--s3); }
+}
+.keyidea { font-family: var(--display); font-size: clamp(1.3rem, 2.4vw, 1.75rem); font-weight: 700; line-height: 1.25; max-width: 32ch; margin: var(--s5) 0 var(--s3); }
+.keyidea code { font-size: 0.85em; }
+
+/* ---------- demos ---------- */
+.demo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s4) var(--s5); padding: var(--s5) 0; border-bottom: 1px solid var(--rule-soft); }
+.demo:first-of-type { padding-top: var(--s3); }
+.demo:last-of-type { border-bottom: 0; }
+.demo video { width: 100%; height: auto; display: block; background: var(--ink); border-radius: 3px; }
+.demo h3 { font-size: 1.6rem; margin-bottom: var(--s2); }
+.demo .len { font: 700 0.8rem/1 var(--mono); color: var(--pencil); margin-bottom: var(--s3); display: block; }
+.demo dl { margin: var(--s3) 0; display: grid; gap: var(--s3); }
+.demo dt { font: 700 0.78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); }
+.demo dd { margin: var(--s1) 0 0; }
+.demo .links { font: 400 0.9rem/1.4 var(--mono); display: flex; gap: var(--s3); flex-wrap: wrap; }
+@media (max-width: 860px) { .demo { grid-template-columns: 1fr; } }
+.caught { background: var(--pencil-soft); padding: var(--s4); border-radius: 3px; margin-top: var(--s4); max-width: 60rem; }
+.caught h3 { font-size: 1.15rem; margin-bottom: var(--s3); }
+.caught ul { margin: 0; padding-left: 1.2em; }
+.caught li { margin-bottom: var(--s2); max-width: 70ch; }
+
+/* ---------- start here ---------- */
+.steps { list-style: none; padding: 0; margin: 0; max-width: 62rem; }
+.steps li { display: grid; grid-template-columns: 3.5rem 1fr; gap: var(--s3); padding: var(--s4) 0; border-bottom: 1px solid var(--rule-soft); }
+.steps li:first-child { padding-top: 0; }
+.steps .n { font: 800 2.4rem/0.9 var(--display); color: var(--rule); }
+.steps h3 { margin-bottom: var(--s1); }
+.steps p { margin: 0; color: var(--ink-2); }
+
+/* ---------- prompt card ---------- */
+.card-wrap { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--s5); align-items: start; }
+@media (max-width: 900px) { .card-wrap { grid-template-columns: 1fr; } }
+.promptcard { background: var(--ink); color: var(--paper); border-radius: 4px; padding: var(--s4); position: relative; }
+.promptcard .label { font: 700 0.75rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--rule); margin-bottom: var(--s3); display: flex; justify-content: space-between; align-items: center; gap: var(--s3); }
+.promptcard pre { margin: 0; font: 400 1.05rem/1.6 var(--mono); white-space: pre-wrap; word-break: break-word; }
+.copy { font: 700 0.78rem/1 var(--mono); background: var(--paper); color: var(--ink); border: 0; padding: 0.6em 0.9em; border-radius: 2px; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.promptcard + p { margin-top: var(--s3); color: var(--ink-2); font-size: 0.95rem; }
+.plist { list-style: none; padding: 0; margin: 0; }
+.plist li { padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
+.plist li:first-child { padding-top: 0; }
+.plist a { font-family: var(--display); font-weight: 700; font-size: 1.1rem; }
+.plist span { display: block; color: var(--ink-2); font-size: 0.95rem; margin-top: var(--s1); }
+
+/* ---------- guide ---------- */
+.tags { display: flex; gap: var(--s4); flex-wrap: wrap; font-size: 0.95rem; margin-bottom: var(--s4); color: var(--ink-2); max-width: 66rem; }
+.tags > span { display: flex; gap: var(--s2); align-items: baseline; }
+.tag { font: 700 0.72rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 0.35em 0.5em; border-radius: 2px; white-space: nowrap; display: inline-block; }
+.tag-confirmed { background: var(--ink); color: var(--paper); }
+.tag-tentative { border: 1.5px dashed var(--ink-3); color: var(--ink-2); padding: calc(0.35em - 1.5px) calc(0.5em - 1.5px); }
+.tag-contested { background: var(--pencil-soft); color: var(--pencil); }
+.stagenav { font: 400 0.85rem/1.8 var(--mono); display: flex; flex-wrap: wrap; gap: 0 var(--s4); margin-bottom: var(--s4); }
+.stagenav a { text-decoration: none; color: var(--ink-2); }
+.stagenav a:hover { color: var(--pencil); }
+.stage { border-top: 1px solid var(--rule); max-width: 66rem; }
+.stage:last-of-type { border-bottom: 1px solid var(--rule); }
+.stage summary { display: grid; grid-template-columns: 3.2rem 1fr auto; gap: var(--s3); align-items: baseline; padding: var(--s3) 0; cursor: pointer; list-style: none; }
+.stage summary::-webkit-details-marker { display: none; }
+.stage summary:hover .sname { color: var(--pencil); }
+.sn { font: 700 0.9rem/1 var(--mono); color: var(--pencil); }
+.sname { font: 700 clamp(1.2rem, 2.2vw, 1.5rem)/1.15 var(--display); transition: color 160ms var(--ease); }
+.scount { font: 400 0.8rem/1 var(--mono); color: var(--ink-3); white-space: nowrap; }
+.scount::after { content: " +"; color: var(--ink); font-weight: 700; }
+.stage[open] .scount::after { content: " \2212"; }
+@media (max-width: 560px) { .stage summary { grid-template-columns: 2.4rem 1fr; } .scount { grid-column: 2; } }
+.sbody { padding: 0 0 var(--s5) 3.2rem; }
+@media (max-width: 560px) { .sbody { padding-left: 0; } }
+.sintro { font-style: italic; color: var(--ink-2); }
+.lessons { list-style: none; padding: 0; margin: var(--s4) 0; }
+.lesson { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr); gap: var(--s3); padding: var(--s2) 0; align-items: baseline; line-height: 1.5; }
+.lesson .tag { justify-self: start; }
+.lt { font-weight: 600; }
+.ls { color: var(--ink-2); }
+@media (max-width: 560px) { .lesson { grid-template-columns: 1fr; gap: var(--s1); } }
+.pits { background: var(--paper-2); padding: var(--s3) var(--s4); border-radius: 3px; margin: var(--s4) 0; max-width: 60rem; }
+.pits h4 { font: 700 0.78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); margin-bottom: var(--s2); }
+.pits ul { margin: 0; padding-left: 1.1em; columns: 2 22rem; column-gap: var(--s5); }
+.pits li { margin-bottom: var(--s1); break-inside: avoid; }
+.more { font: 700 0.9rem/1 var(--mono); }
+.more::after { content: " \2192"; }
+.appx { margin-top: var(--s4); color: var(--ink-2); }
+
+/* ---------- commands ---------- */
+.cmd { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 3px; padding: var(--s3) var(--s4); overflow-x: auto; max-width: 52rem; margin: var(--s3) 0 var(--s4); }
+.cmd pre { margin: 0; font: 400 0.92rem/1.65 var(--mono); }
+.cmd .c { color: var(--ink-3); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); max-width: 66rem; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+
+.caution { font-family: var(--display); font-size: clamp(1.25rem, 2.3vw, 1.6rem); font-weight: 700; line-height: 1.3; max-width: 36ch; }
+
+/* ---------- footer ---------- */
+footer { border-top: 2px solid var(--ink); padding: var(--s5) 0 var(--s6); font-size: 0.95rem; color: var(--ink-2); }
+footer .cols { gap: var(--s4) var(--s5); }
+footer h4 { font: 700 0.78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink); margin-bottom: var(--s2); }
+footer ul { margin: 0; padding-left: 1.1em; }
+footer li { margin-bottom: var(--s2); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <span>animation-via-code</span>
+    <nav aria-label="Sections">
+      <a href="#demos">Demos</a>
+      <a href="#start">Start</a>
+      <a href="#prompts">Prompts</a>
+      <a href="#guide">Guide</a>
+      <a href="https://github.com/lpcode808/animation-via-code">Repo on GitHub</a>
+    </nav>
+  </header>
+
+  <section class="hero" aria-labelledby="title">
+    <div>
+      <h1 id="title">Animation <em>via</em> code</h1>
+      <p class="lede">Short explainer videos made by asking an AI coding agent to write code that draws every frame.</p>
+      <p class="lede-2">Notes from a few dozen pieces, mostly 15 seconds to 3 minutes: what worked, what broke, and how sure we are of each. Plus prompts, a tiny template and three demos with their source. Not a framework.</p>
+      <div class="go">
+        <a class="btn" href="#prompts">Copy the prompt</a>
+        <a class="btn quiet" href="https://github.com/lpcode808/animation-via-code">Read the repo</a>
+      </div>
+    </div>
+
+    <figure class="viewer" style="margin:0" aria-label="A bouncing ball drawn from time alone">
+      <canvas id="ball" width="1920" height="1080" role="img" aria-label="A ball drops onto a floor and bounces lower each time, with a caption for each beat."></canvas>
+      <div class="scrub">
+        <button class="play" id="play" aria-label="Play">&#9654;</button>
+        <div class="track" id="track">
+          <div class="bar"></div><div class="fill" id="fill"></div>
+          <div id="ticks"></div>
+          <div class="head" id="head"></div>
+          <input type="range" id="t" min="0" max="6" step="0.0333333" value="0" aria-label="Time in seconds">
+        </div>
+      </div>
+      <div class="readout" aria-live="off">
+        <span>renderAt(<b id="tv">0.00</b>)</span>
+        <span>frame <b id="fv">000</b> of 180</span>
+        <span>ball y <b id="yv">140</b> px</span>
+      </div>
+      <figcaption class="legend-inline"><i></i>bounce, where the sound lands <i class="b"></i>caption change &middot; drag anywhere: the picture comes from <code>t</code> alone</figcaption>
+    </figure>
+  </section>
+</div>
+
+<div class="wrap">
+  <section class="sheet" id="why">
+    <div class="fr"><span>01</span>WHY</div>
+    <div class="cell">
+      <p class="kicker">Why code instead of a video model</p>
+      <h2>A video model grows a clip. Code builds one.</h2>
+      <div class="versus">
+        <div><h3>Grown</h3><p>Fast and beautiful, and hard to correct. Ask for a fix and you get a different clip.</p></div>
+        <div><h3>Built</h3><p>Every shape, number and caption is exact, editable and repeatable. A reviewer says the arrow points the wrong way; you change one line and re-render.</p></div>
+      </div>
+      <p>That matters for teaching. If a caption says "3 + 4 = 7", the diagram can be checked against it. The cost is that you, or the agent, have to describe things precisely, and rendering takes minutes, not seconds.</p>
+
+      <p class="keyidea">Each frame is a pure function of time. <code>renderAt(t)</code> draws the same picture for the same <code>t</code>, no matter what came before.</p>
+      <p>That one rule is what lets you render in parallel, re-render one second, and trust that what you previewed is what you ship. The ball above works this way: drag to any point and it's drawn fresh.</p>
+
+      <ol class="pipe" aria-label="The usual pipeline">
+        <li><b>Prompt</b><span>Topic, audience, style, length.</span></li>
+        <li><b>Scene code</b><span>The agent writes <code>renderAt(t)</code>.</span></li>
+        <li><b>Frames</b><span>A headless browser captures each one, 30 or 60 fps.</span></li>
+        <li><b>Sound</b><span>numpy writes music and effects as raw samples.</span></li>
+        <li><b>MP4</b><span>ffmpeg joins frames and audio.</span></li>
+        <li><b>Review</b><span>Contact sheets, a fresh reviewer, fix, re-render.</span></li>
+      </ol>
+      <p>That's the most common route, not the only one. Pieces here also used SVG rasterizers, skia-python with no browser (how the demos were made), Manim, Remotion and headless Blender. <a href="https://github.com/lpcode808/animation-via-code/blob/main/guide/2-renderer.md">Pick for the subject.</a></p>
+    </div>
+  </section>
+
+  <section class="sheet" id="demos">
+    <div class="fr"><span>02</span>DEMOS</div>
+    <div class="cell">
+      <p class="kicker">Three demos, with their source</p>
+      <h2>Each scene checks itself before it renders.</h2>
+      <p>Drawn frame by frame in Python with skia-python. Each file is one scene: a duration, a <code>draw(canvas, t)</code> that's a pure function of time, a <code>checks()</code> that must pass before anything renders, and a soundtrack written as numpy samples.</p>
+
+      <article class="demo">
+        <video controls preload="metadata" playsinline src="demos/bouncing_ball.mp4#t=3" aria-label="Bouncing ball demo"></video>
+        <div>
+          <h3>Bouncing ball</h3>
+          <span class="len">8 s</span>
+          <dl>
+            <div><dt>What it shows</dt><dd>Physics computed from <code>t</code>, and sound placed from the same physics.</dd></div>
+            <div><dt>What its check proves</dt><dd>The first landing falls inside the "speeds up" caption, so words and picture agree.</dd></div>
+          </dl>
+          <p class="links"><a href="https://github.com/lpcode808/animation-via-code/blob/main/demos/bouncing_ball.py">bouncing_ball.py</a><a href="demos/bouncing_ball-sheet.jpg">contact sheet</a></p>
+        </div>
+      </article>
+
+      <article class="demo">
+        <video controls preload="metadata" playsinline src="demos/pythagorean_proof.mp4#t=20" aria-label="Pythagorean proof demo"></video>
+        <div>
+          <h3>Pythagorean proof</h3>
+          <span class="len">30 s</span>
+          <dl>
+            <div><dt>What it shows</dt><dd>Four triangles rearranged inside one square, with a live area readout.</dd></div>
+            <div><dt>What its check proves</dt><dd>The uncovered area, sampled from the triangles as drawn, is c² before and exactly a² + b² after. No triangle turns or flips.</dd></div>
+          </dl>
+          <p class="links"><a href="https://github.com/lpcode808/animation-via-code/blob/main/demos/pythagorean_proof.py">pythagorean_proof.py</a><a href="demos/pythagorean_proof-sheet.jpg">contact sheet</a></p>
+        </div>
+      </article>
+
+      <article class="demo">
+        <video controls preload="metadata" playsinline loop src="demos/water_cycle.mp4#t=6" aria-label="Water cycle demo"></video>
+        <div>
+          <h3>Water cycle</h3>
+          <span class="len">20 s loop</span>
+          <dl>
+            <div><dt>What it shows</dt><dd>Evaporation, condensation, precipitation and collection.</dd></div>
+            <div><dt>What its check proves</dt><dd>The last frame matches the first, so it loops with no jump.</dd></div>
+          </dl>
+          <p class="links"><a href="https://github.com/lpcode808/animation-via-code/blob/main/demos/water_cycle.py">water_cycle.py</a><a href="demos/water_cycle-sheet.jpg">contact sheet</a></p>
+        </div>
+      </article>
+
+      <div class="caught">
+        <h3>What reviewing them caught</h3>
+        <ul>
+          <li><b>Bouncing ball.</b> The caption covered the ball once it came to rest, and "It speeds up as it falls" appeared after the first bounce. The floor moved up, the beats were retimed to the physics, and a check now pins them together.</li>
+          <li><b>Pythagorean proof.</b> The first draft placed two triangles wrong. The geometry checks failed before any frame rendered.</li>
+          <li><b>Water cycle.</b> Three fade windows didn't wrap round the loop's end, so the seam check failed until they did. The first caption was also too wide, and rain fell through the mountain.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="start">
+    <div class="fr"><span>03</span>START</div>
+    <div class="cell">
+      <p class="kicker">Start here</p>
+      <h2>Five steps, in the order they pay off.</h2>
+      <ol class="steps">
+        <li><span class="n">1</span><div><h3><a href="#prompts">Try it with a prompt</a></h3><p>Paste the prompt card into a coding agent that can run a browser and ffmpeg, with your topic filled in. Expect 10 to 20 minutes for a 20 to 30 second clip.</p></div></li>
+        <li><span class="n">2</span><div><h3><a href="#demos">Watch and read the demos</a></h3><p>Three short videos with their full source, each with a check that runs before any frame renders.</p></div></li>
+        <li><span class="n">3</span><div><h3><a href="https://github.com/lpcode808/animation-via-code/blob/main/template/">Run the template</a></h3><p>A 6-second browser version of the bouncing ball in about 200 lines: one HTML scene, a render script, a synth soundtrack and a mux step. Its browser render hasn't been run yet, so expect to fix small things.</p></div></li>
+        <li><span class="n">4</span><div><h3><a href="#guide">Read the guide before your second video</a></h3><p>Filed by stage, from planning to companion pages. Each stage has its lessons, then the bugs that cost time there.</p></div></li>
+        <li><span class="n">5</span><div><h3><a href="#prompts">Steal a prompt</a></h3><p>Demo prompts, a review pass, a long one-shot film prompt, and a brief for turning a video of yourself talking into a motion-graphics edit.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sheet" id="prompts">
+    <div class="fr"><span>04</span>PROMPTS</div>
+    <div class="cell">
+      <p class="kicker">Prompts that worked</p>
+      <h2>Start short. Reach for the long ones later.</h2>
+      <div class="card-wrap">
+        <div>
+          <div class="promptcard">
+            <div class="label"><span>The prompt card</span><button class="copy" id="copy" type="button">Copy</button></div>
+            <pre id="cardtext">Make a [15–30 second] video about [topic] for [who it&#x27;s for].
+[Style: e.g. flat shapes, chalkboard, blueprint].
+[Attach a PDF or handout, or say &quot;use what you know&quot;].
+Captions, no narration.</pre>
+          </div>
+          <p>Fill in the brackets and paste it into a coding agent that can run a headless browser and ffmpeg. Captions-only pieces were consistently the fastest; narration made every piece take much longer.</p>
+        </div>
+        <ul class="plist">
+<li><a href="https://github.com/lpcode808/animation-via-code/blob/main/prompts/01-prompt-card.md">Prompt card</a><span>The short prompt on the left, with why each line is there and what to add on a second try.</span></li>
+<li><a href="https://github.com/lpcode808/animation-via-code/blob/main/prompts/02-demo-prompts.md">Demo prompts</a><span>Five prompts for showing the method live, each picked to show something different.</span></li>
+<li><a href="https://github.com/lpcode808/animation-via-code/blob/main/prompts/03-one-shot-film.md">One-shot film prompt (single HTML file)</a><span>A long prompt for a 60 to 120 second film in one self-contained HTML file: picture, music and recording mode together.</span></li>
+<li><a href="https://github.com/lpcode808/animation-via-code/blob/main/prompts/04-review-pass.md">Review pass prompt</a><span>Run it in a fresh agent session with the contact sheets and caption list. The single biggest quality lever.</span></li>
+<li><a href="https://github.com/lpcode808/animation-via-code/blob/main/prompts/05-starter-kit.md">Starter-kit prompt</a><span>When a folder of helpers carries the rules, the prompt itself can be very short.</span></li>
+<li><a href="https://github.com/lpcode808/animation-via-code/blob/main/prompts/06-edit-your-own-video.md">Edit your own talking video into a motion-graphics piece</a><span>Starts from footage instead: a portrait phone video of you talking, turned into a landscape edit with graphics and word-synced captions.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="guide">
+    <div class="fr"><span>05</span>GUIDE</div>
+    <div class="cell">
+      <p class="kicker">The guide, by stage</p>
+      <h2>78 lessons and 28 pitfalls, filed where you'll hit them.</h2>
+      <p>Open a stage to see its lessons in one line each. The full text, with the examples behind each one, is in the repo.</p>
+      <div class="tags">
+        <span><span class="tag tag-confirmed">confirmed</span> held up across many pieces</span>
+        <span><span class="tag tag-tentative">tentative</span> seen once or twice</span>
+        <span><span class="tag tag-contested">contested</span> the notes disagree</span>
+      </div>
+      <nav class="stagenav" aria-label="Stages"><a href="#stage-1">01 Plan the piece</a> <a href="#stage-2">02 Pick a renderer</a> <a href="#stage-3">03 Build the scene on one clock</a> <a href="#stage-4">04 Sound and mix</a> <a href="#stage-5">05 Render at scale</a> <a href="#stage-6">06 Check it's right, then review</a> <a href="#stage-7">07 Make it legible</a> <a href="#stage-8">08 Companion pages (optional)</a></nav>
+
+<details class="stage" id="stage-1">
+  <summary>
+    <span class="sn">01</span>
+    <span class="sname">Plan the piece</span>
+    <span class="scount">14 lessons · 1 pitfalls</span>
+  </summary>
+  <div class="sbody">
+    <p class="sintro">Decide what the video teaches, in what order and how long each idea holds, before any code exists. Most bad videos were bad plans drawn well.</p>
+    <ul class="lessons"><li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Plan before you draw.</span> <span class="ls">Spend the first couple of minutes on a beat list: what's on screen, what the caption says, and how long it holds.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Short prompts work if they cover five things.</span> <span class="ls">Length and purpose, audience, one or two taste constraints (more than three start to conflict), source material, and permission to go big ("go all out").</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Write a "done means" line.</span> <span class="ls">For example: "done means a new person watching can understand the concept." It gives both you and the agent a test for every review.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Expect the agent to flag conflicts.</span> <span class="ls">If the length and the content can't both be true (the song runs 45 s, you asked for 30), a good agent says so before coding and picks a stated default.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Storyboard at sketch fidelity first.</span> <span class="ls">A rough shot list or pencil-style frames are cheap to fix.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Five to seven new ideas a minute.</span> <span class="ls">A first-time viewer absorbs about that many ideas in 60 seconds.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Pick an order for the idea, not the topic.</span> <span class="ls">A beat order that worked again and again: an everyday <b>analogy</b>, then a <b>diagram</b>, then a worked <b>example</b>, then the idea in <b>plain English</b>, and only then the <b>technical</b> name or formula.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Show the skill, don't describe it.</span> <span class="ls">"Watch the gear mesh" beats "gears transfer torque".</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Before and after.</span> <span class="ls">A quick "without this / with this" contrast holds attention better than a straight walkthrough, especially at the start.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Compress the repetitive middle.</span> <span class="ls">When a process repeats (printing layers, sanding, a loop of code), show one cycle properly, then a short montage, then the result.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">End on something usable.</span> <span class="ls">Close on a recap line, a question to try, or the one rule to remember, not on a logo or a fade.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Use the source's own words and structure.</span> <span class="ls">Keep the source's verbs, turn the author's own metaphors into the visuals, and when a document's prose and its tables disagree, follow the tables.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Give each video its own identity.</span> <span class="ls">After a run of pieces, the same plucks, pads, chimes and card layouts crept into everything.</span></span></li>
+<li class="lesson"><span class="tag tag-contested" title="contested">contested</span><span class="lx"><span class="lt">Time box.</span> <span class="ls">One target was 15 minutes from prompt to MP4 for a 15 to 30 second clip: plan by minute 2, a contact sheet by minute 7, review by minute 10.</span></span></li></ul>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>Can't download a reference image or asset</li></ul></div>
+    <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/1-plan.md">Read stage 1 in full</a>
+  </div>
+</details>
+
+<details class="stage" id="stage-2">
+  <summary>
+    <span class="sn">02</span>
+    <span class="sname">Pick a renderer</span>
+    <span class="scount">9 lessons · 8 pitfalls</span>
+  </summary>
+  <div class="sbody">
+    <p class="sintro">Choose what draws the frames for this subject, then get it working once. The rule that matters in every renderer is the same: each frame is a pure function of time (stage 3).</p>
+    <ul class="lessons"><li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">There is more than one good renderer.</span> <span class="ls">Pieces in this collection used, among others: Canvas 2D in a headless browser; SVG strings rasterized with resvg; skia-python; a numpy "shader" for pixel effects; Manim for math scenes (rendered as parallel scenes); Remotion; DOM and SVG animated with a paused animation library and stepped through DevTools; three.js in software WebGL; and real Blender (installed from pip, Cycles on CPU) for a 12-second section at 720p and low samples.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Canvas 2D is the default renderer.</span> <span class="ls">It's fast, predictable and the agent knows it well.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Python is fine too.</span> <span class="ls">The demos here use skia-python with no browser at all, at roughly 30 to 50 frames per second per worker for simple 1080p scenes.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Real 3D is expensive without a GPU.</span> <span class="ls">three.js in software rendering ran about one second per frame; one 3D piece (a 3D printer) took over 100 minutes to render.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Software WebGL needs flags.</span> <span class="ls">With no GPU, launch Chromium with <code>--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader</code> for three.js or WebGL scenes.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Hand-drawn brush looks are slow.</span> <span class="ls">Brush libraries without a GPU crawl.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Frame rate follows style.</span> <span class="ls">12 fps drawn "on twos" and played at 24 reads as hand-drawn; 30 for motion graphics; 60 only when fine timing (fingers on keys) matters.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">A framework may save the setup time.</span> <span class="ls">Left alone, the agent rebuilds the seek-and-screenshot harness from scratch each time, which costs 20 to 40 minutes.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Pages you can't seek can still be recorded.</span> <span class="ls">For timer-driven pages like slide decks, Chrome's DevTools screencast (<code>Page.startScreencast</code>) works where Playwright's video recording needs its own ffmpeg.</span></span></li></ul>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>skia-python fails to import with a missing <code>libEGL.so.1</code></li><li>CDN fonts don't load in the sandbox</li><li>Missing glyphs show as boxes</li><li>Code font turns <code>-&gt;</code> or <code>===</code> into one glyph</li><li>An animated SVG group jumps to the top-left corner</li><li>A shape grows fake notches where parts overlap</li><li>A <code>&lt;/script&gt;</code> inside a template literal ends the page's script</li><li>A model's weights won't download</li></ul></div>
+    <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/2-renderer.md">Read stage 2 in full</a>
+  </div>
+</details>
+
+<details class="stage" id="stage-3">
+  <summary>
+    <span class="sn">03</span>
+    <span class="sname">Build the scene on one clock</span>
+    <span class="scount">9 lessons · 4 pitfalls</span>
+  </summary>
+  <div class="sbody">
+    <p class="sintro">Write one timeline, and draw every frame from it. Picture, captions, narration and sound all read the same clock, so changing one beat moves everything with it.</p>
+    <ul class="lessons"><li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">One clock for everything.</span> <span class="ls">Write a single timeline file (a table of beats with start and end times) and drive the picture, captions and sound from it.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Frames are a pure function of time.</span> <span class="ls">Write <code>renderAt(t)</code> so it draws the same frame for the same <code>t</code>, whatever came before.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Narrate what's on screen.</span> <span class="ls">When there is a voice, have it say the on-screen text word for word, space new terms about half a second apart, and define each term before using it.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Narration is optional and expensive in time.</span> <span class="ls">A local text-to-speech model plus a speech-to-text check (to confirm the words came out right) worked, but it pushed pieces well past a 15-minute box.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Add time at the front without retiming everything.</span> <span class="ls">Keep the old timeline as "old time" (<code>u = t - shift</code>), draw the new intro in new time, and shift the sound cue list by the same amount.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Revisions without full re-renders.</span> <span class="ls">When an edit only changes a few seconds, remap the clock so unchanged frames are reused from the last render.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">For a loop, compare the last frame with the first.</span> <span class="ls">Make everything a function of the loop's phase, make anything that repeats inside the loop repeat a whole number of times, and let any soft on/off window wrap past the end.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Real footage: time comes from the words.</span> <span class="ls">When you edit a recording of someone talking, transcribe it with word timings (<code>[word, start, end]</code>) and hang every caption, graphic and sound cue on those times.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Real footage: use every source frame once, in order.</span> <span class="ls">Lay the footage out with keyframes (position, size, corner radius of the video card over time) and assert that each source frame appears exactly once and in order, so nothing is cut or doubled by accident.</span></span></li></ul>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>Text "pops" in at full opacity for one frame</li><li>A fade-in plays twice or skips</li><li>Same seed, different frame</li><li>The camera is on the wrong side</li></ul></div>
+    <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/3-scene.md">Read stage 3 in full</a>
+  </div>
+</details>
+
+<details class="stage" id="stage-4">
+  <summary>
+    <span class="sn">04</span>
+    <span class="sname">Sound and mix</span>
+    <span class="scount">11 lessons · 2 pitfalls</span>
+  </summary>
+  <div class="sbody">
+    <p class="sintro">Write the music and effects as code too, place them from the picture's own events, and measure the mix in the file you deliver.</p>
+    <ul class="lessons"><li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Synthesize what you can.</span> <span class="ls">Most music and effects were written as raw samples with numpy: no sample libraries, no licensing questions.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Let the picture tell the sound where to go.</span> <span class="ls">Scenes call something like <code>cue(scene, u, "whoosh")</code> while rendering; the renderer writes those to <code>cues.json</code>; the audio script places each sound on its exact frame.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Music on a bar grid.</span> <span class="ls">Pick a tempo so bars land on round seconds (120 bpm: one bar is 2 s) and line scene changes up with bar lines.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Give effects their own bus.</span> <span class="ls">Duck the music about 6 dB under effects.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Measure peaks after encoding.</span> <span class="ls">AAC encoding raised true peaks by 4 to 5 dB in several pieces.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Seed every random choice, one stream per purpose.</span> <span class="ls">Use a seeded generator (<code>mulberry32(hash(seed, n))</code>).</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Pin levels in tests.</span> <span class="ls">If you keep a library of instruments, test each part's loudness against the whole mix (for example ±0.5 LU).</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Silence can be a beat.</span> <span class="ls">Cutting the music for under a second where something is supposed to happen and doesn't (a timer that never rings) made the point better than any sound.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Licensed music goes in last.</span> <span class="ls">If you'll use a real track, have the agent leave the music bed silent and add it in your editor.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">The agent can't hear.</span> <span class="ls">Every report should say whether a human has listened.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">A real voice comes first.</span> <span class="ls">When the video has a recorded voice, high-pass it and compress it gently, duck the music under the words, and keep effects light.</span></span></li></ul>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>A pad or choir throbs</li><li>Clicks at note ends</li></ul></div>
+    <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/4-sound.md">Read stage 4 in full</a>
+  </div>
+</details>
+
+<details class="stage" id="stage-5">
+  <summary>
+    <span class="sn">05</span>
+    <span class="sname">Render at scale</span>
+    <span class="scount">6 lessons · 5 pitfalls</span>
+  </summary>
+  <div class="sbody">
+    <p class="sintro">Turn the scene into thousands of frames and one MP4 without babysitting it.</p>
+    <ul class="lessons"><li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Headless browser, many workers.</span> <span class="ls">Load the scene in headless Chromium with Playwright, call <code>renderAt(t)</code> for each frame, and save it as JPEG (screenshot, or read the canvas directly with <code>toDataURL</code>).</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Wait for a ready flag.</span> <span class="ls">Have the page set something like <code>window.__ready = true</code> after fonts load and any pre-rendering finishes, and have the capture script wait for it.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Write numbered frames so the run can resume.</span> <span class="ls"><code>00000.jpg</code>, <code>00001.jpg</code>… A crashed render picks up where it stopped, and a bad range can be deleted and re-rendered: patch, don't restart.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Run it detached.</span> <span class="ls">Long renders die when the agent's shell is recycled.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Encode for everywhere.</span> <span class="ls">H.264, <code>yuv420p</code>, <code>+faststart</code>.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Local hardware changes the rules.</span> <span class="ls">Everything here was tuned in a cloud sandbox (about 2 cores, no GPU, a network allowlist).</span></span></li></ul>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>The first frames use the wrong font</li><li>A long render dies when the session goes idle</li><li><code>pkill render</code> killed the agent's own shell, or <code>pgrep</code> found itself</li><li>ESM scripts can't find a globally installed package</li><li>Scripts lost their execute bit</li></ul></div>
+    <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/5-render.md">Read stage 5 in full</a>
+  </div>
+</details>
+
+<details class="stage" id="stage-6">
+  <summary>
+    <span class="sn">06</span>
+    <span class="sname">Check it's right, then review</span>
+    <span class="scount">12 lessons · 3 pitfalls</span>
+  </summary>
+  <div class="sbody">
+    <p class="sintro">Check the content first, then the frames, then ask someone who wasn't there.</p>
+    <ul class="lessons"><li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">A fresh reviewer is the biggest lever.</span> <span class="ls">After the first full render, start a new agent with no context, give it the video's contact sheets and caption list, and ask it to play two roles: someone seeing this for the first time, and a teacher of the subject.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Model the process, not its picture.</span> <span class="ls">If the subject is a machine or procedure, simulate what it actually does and let the animation show the result.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Make on-screen numbers live computations.</span> <span class="ls">Compute counts, measurements and totals in the page, and assert them against a source the subject already has (a measurement, a dataset).</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">When the subject is code, show the code that runs.</span> <span class="ls">Store it as a string, display that string, and run it to drive the picture and sound.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Don't let a caption claim something you didn't compute.</span> <span class="ls">"Where all three views agree, the object is" is only honest if the piece actually carves the object from the views.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Check what a formula draws before captioning it.</span> <span class="ls">Captions written from notes, not from the render, described patterns that didn't appear.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Ask the agent to list its guesses.</span> <span class="ls">"Which steps did you guess at?" points you straight at the likely mistakes.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Props leak answers.</span> <span class="ls">In classroom pieces, background props and labels gave away the decisions students were meant to make.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Label reconstructions.</span> <span class="ls">When a piece mixes real records (real titles, real data) with drawn stand-ins, say which parts are reconstructed.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Beauty can hide a missing explanation.</span> <span class="ls">One piece was judged "too pretty, under-explained".</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Hedge claims you can't check.</span> <span class="ls">Cultural and current-events claims get softer wording or a source on screen.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Read the video, don't watch it.</span> <span class="ls">An agent can't watch video efficiently: about 20 minutes of footage costs tens of millions of tokens as frames, and around ten thousand as a word-level transcript.</span></span></li></ul>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>A word count or quote is wrong</li><li>"Nothing changed" but the file is new</li><li><code>console.assert</code> or <code>console.table</code> is missing</li></ul></div>
+    <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/6-review.md">Read stage 6 in full</a>
+  </div>
+</details>
+
+<details class="stage" id="stage-7">
+  <summary>
+    <span class="sn">07</span>
+    <span class="sname">Make it legible</span>
+    <span class="scount">15 lessons · 2 pitfalls</span>
+  </summary>
+  <div class="sbody">
+    <p class="sintro">Sizes, contrast and small honesty labels that decide whether the video works on a phone or at the back of a room.</p>
+    <ul class="lessons"><li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Text sizes.</span> <span class="ls">At 1080p: captions about 74 px, labels about 44 px.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Contrast.</span> <span class="ls">At least 3:1 for lines and tracks against the background; coloured text needs a darker ink than the matching fill.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Show viewpoint changes.</span> <span class="ls">When switching from a flat diagram to a 3D or isometric view, show a small orientation card or animate the projection from flat to iso.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Cause before effect.</span> <span class="ls">Draw the push before the motion, the input before the output.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Label your cheats.</span> <span class="ls">"Sped up", "not to scale", "lines drawn thicker than real".</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Date anything current.</span> <span class="ls">"As of March 2026" on any figure that can change.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">A plain stand-in character.</span> <span class="ls">For "you could do this" pieces, a nondescript character with second-person captions ("you sand the edge") worked better than a named person.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Both ends as strengths.</span> <span class="ls">In pieces about personality or learning styles, show each end of a scale as a strength, never one as the deficit.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Magnifier for detail.</span> <span class="ls">A close-up circle connected to its source by a cone reads better than cutting to a zoomed shot.</span></span></li>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Push transitions need care.</span> <span class="ls">Sliding a whole scene sideways looks jittery unless offsets are whole pixels and a little motion blur is averaged in.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Hand-drawn wobble at 4 fps.</span> <span class="ls">"Boiling" sketchy lines (redrawing them slightly differently) about four times a second reads as hand-drawn without being distracting.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Matching a reference clip.</span> <span class="ls">When remaking a real video, solve each shot's camera from the reference and key motion to its exact frames.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Word-synced captions.</span> <span class="ls">For a recorded talk, page captions one sentence at a time, at most 3 lines, at least 0.6 s per page, with the current word highlighted.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">One graphic per sentence, one color per idea.</span> <span class="ls">In an edit of a talk, give each sentence at most one graphic (diagram, chip, timeline, mock-up), keep one color per idea everywhere, and use 2 or 3 fonts.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Cut-outs switch in with a wipe.</span> <span class="ls">Run background removal only on the frames where text passes behind the speaker or they leave their frame, and switch into the cut-out with a wipe so mask flicker doesn't show.</span></span></li></ul>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>Text runs out of its panel when a window shrinks</li><li>Things move in steps instead of smoothly</li></ul></div>
+    <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/7-craft.md">Read stage 7 in full</a>
+  </div>
+</details>
+
+<details class="stage" id="stage-8">
+  <summary>
+    <span class="sn">08</span>
+    <span class="sname">Companion pages (optional)</span>
+    <span class="scount">2 lessons · 3 pitfalls</span>
+  </summary>
+  <div class="sbody">
+    <p class="sintro">The same drawing code can power an interactive page next to the video.</p>
+    <ul class="lessons"><li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Reuse the video's code.</span> <span class="ls">The same <code>renderAt(t)</code> that renders the MP4 can power a web page with a scrubber, so readers can pause on any moment.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Make numbers draggable, with buttons.</span> <span class="ls">Inline numbers readers can change ("what if gravity were <em>12</em>?") worked well with visible −/+ buttons; a dashed underline alone wasn't discoverable.</span></span></li></ul>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li><code>history.replaceState</code> throws</li><li>Audio won't seek in a hosted page</li><li>The test browser won't play your MP4</li></ul></div>
+    <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/8-companion-pages.md">Read stage 8 in full</a>
+  </div>
+</details>
+      <p class="appx">The <a href="https://github.com/lpcode808/animation-via-code/blob/main/guide/appendix.md">appendix</a> covers working with the agent, cost and time, and where the notes disagree.</p>
+    </div>
+  </section>
+
+  <section class="sheet" id="run">
+    <div class="fr"><span>06</span>RUN</div>
+    <div class="cell">
+      <p class="kicker">Run it yourself</p>
+      <h2>Two ways to render on your own machine.</h2>
+      <div class="cols">
+        <div>
+          <h3>The demos (tested)</h3>
+          <p>Python 3 with numpy and skia-python, plus ffmpeg. On Ubuntu, skia needs the EGL library even for CPU rendering.</p>
+          <div class="cmd"><pre><span class="c"># install</span>
+pip install numpy skia-python
+sudo apt-get install -y libegl1 ffmpeg fonts-dejavu-core
+<span class="c"># render one</span>
+cd demos
+python3 build.py bouncing_ball</pre></div>
+          <p>Frames are cached in <code>work/&lt;name&gt;</code>. Delete that folder after changing a scene's <code>draw()</code>, or the old frames are reused.</p>
+        </div>
+        <div>
+          <h3>The template (browser)</h3>
+          <p>Node 18+, Python 3 with numpy, and ffmpeg. Not yet run end to end in a browser; if a step fails, the demos are the tested version of the same idea.</p>
+          <div class="cmd"><pre>cd template
+npm install
+npx playwright install chromium
+node render.mjs     <span class="c"># 180 frames</span>
+python3 audio.py    <span class="c"># audio.wav</span>
+bash mux.sh         <span class="c"># out.mp4</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="caution">
+    <div class="fr"><span>07</span>NOTE</div>
+    <div class="cell">
+      <p class="kicker">A caution on using these notes</p>
+      <p class="caution">Don't paste the whole guide into an agent's standing instructions.</p>
+      <p>When that was tried, every new video converged on the same pipeline and look. Give the agent the short prompt, and reach for the lessons when something breaks or you want to push past the default.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="cols">
+      <div>
+        <h4>Credits</h4>
+        <ul>
+          <li>The beat order for explainers (analogy, diagram, example, plain English, technical) is adapted from BetterExplained's ADEPT method.</li>
+          <li>Some hand-drawn-style pieces used a public third-party starter kit, ClaudeAnimationBase, built on <a href="https://github.com/acamposuribe/p5.brush">p5.brush</a> (MIT). Credit and license belong to their authors; nothing from either is included here.</li>
+          <li>Interactive explainer pages were influenced by Bret Victor's <em>Explorable Explanations</em>.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>License</h4>
+        <p>Code (the demos, the template, and code blocks in the prompts) is under the <a href="https://github.com/lpcode808/animation-via-code/blob/main/LICENSE">MIT License</a>. Text and the demo videos are under <a href="https://github.com/lpcode808/animation-via-code/blob/main/LICENSE-docs.md">CC BY 4.0</a>: reuse them with credit.</p>
+        <p><a href="https://github.com/lpcode808/animation-via-code">github.com/lpcode808/animation-via-code</a> &middot; <a href="https://github.com/lpcode808/animation-via-code/blob/main/EXAMPLES.md">the pieces these lessons came from</a> &middot; <a href="https://github.com/lpcode808/animation-via-code/blob/main/CONTRIBUTING.md">contributing</a></p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* The hero frame uses the template's own physics: a pure function of t. */
+(() => {
+  const W = 1920, H = 1080, DURATION = 6, FPS = 30;
+  const G = 400, FLOOR = 660, TOP = 140, E = 0.6, DROP_AT = 0.8;
+  const BEATS = [
+    { start: 0.0, end: 1.3, caption: 'A ball is dropped.' },
+    { start: 1.3, end: 2.6, caption: 'It speeds up as it falls.' },
+    { start: 2.6, end: 6.0, caption: 'Each bounce loses height.' },
+  ];
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const ease = u => u * u * (3 - 2 * u);
+
+  function ballY(t) {
+    const h = FLOOR - TOP; let tt = t - DROP_AT;
+    if (tt < 0) return TOP;
+    const fall = Math.sqrt(2 * h / G);
+    if (tt < fall) return TOP + 0.5 * G * tt * tt;
+    tt -= fall;
+    let v = G * fall * E;
+    while (v > 30) {
+      const flight = 2 * v / G;
+      if (tt < flight) return FLOOR - (v * tt - 0.5 * G * tt * tt);
+      tt -= flight; v *= E;
+    }
+    return FLOOR;
+  }
+  const bounces = [];
+  { const h = FLOOR - TOP; let t = DROP_AT + Math.sqrt(2 * h / G), v = G * Math.sqrt(2 * h / G) * E;
+    while (v > 30 && t < DURATION) { bounces.push(t); t += 2 * v / G; v *= E; } }
+
+  const cv = document.getElementById('ball'), ctx = cv.getContext('2d');
+  const C = {};
+  const readColors = () => ['--paper','--paper-3','--ink','--ink-3','--rule','--rule-soft','--pencil'].forEach(k => C[k] = css(k));
+
+  function renderAt(t) {
+    ctx.fillStyle = C['--paper']; ctx.fillRect(0, 0, W, H);
+    // exposure-sheet rules behind the action
+    ctx.strokeStyle = C['--rule-soft']; ctx.lineWidth = 2;
+    for (let y = 60; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    // floor
+    ctx.fillStyle = C['--ink']; ctx.fillRect(160, FLOOR, W - 320, 6);
+    // shadow shrinks as the ball rises
+    const y = ballY(t);
+    const s = 1 - (FLOOR - y) / 900;
+    ctx.fillStyle = C['--paper-3'];
+    ctx.beginPath(); ctx.ellipse(W / 2, FLOOR + 3, 62 * s, 12 * s, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = C['--pencil'];
+    ctx.beginPath(); ctx.arc(W / 2, y - 34, 34, 0, 7); ctx.fill();
+    // captions fade on the beat's own clock
+    for (const b of BEATS) {
+      if (t < b.start || t >= b.end) continue;
+      const a = Math.min(clamp((t - b.start) / 0.25), clamp((b.end - t) / 0.25));
+      ctx.save(); ctx.globalAlpha *= ease(a);
+      ctx.font = '700 72px "Bricolage Grotesque", sans-serif';
+      ctx.textAlign = 'center';
+      const w = ctx.measureText(b.caption).width + 80;
+      ctx.fillStyle = C['--ink']; ctx.fillRect((W - w) / 2, 810, w, 100);
+      ctx.fillStyle = C['--paper']; ctx.fillText(b.caption, W / 2, 884);
+      ctx.restore();
+    }
+  }
+
+  const range = document.getElementById('t'), head = document.getElementById('head'), fill = document.getElementById('fill');
+  const tv = document.getElementById('tv'), fv = document.getElementById('fv'), yv = document.getElementById('yv');
+  const playBtn = document.getElementById('play');
+  const ticks = document.getElementById('ticks');
+  bounces.forEach(b => { const d = document.createElement('div'); d.className = 'tick'; d.style.left = (b / DURATION * 100) + '%'; ticks.appendChild(d); });
+  BEATS.slice(1).forEach(b => { const d = document.createElement('div'); d.className = 'tick beat'; d.style.left = (b.start / DURATION * 100) + '%'; ticks.appendChild(d); });
+
+  let t = 0, playing = false, last = 0;
+  function show() {
+    renderAt(t);
+    const p = (t / DURATION * 100) + '%';
+    head.style.left = p; fill.style.width = p;
+    range.value = t;
+    tv.textContent = t.toFixed(2);
+    fv.textContent = String(Math.min(180, Math.round(t * FPS))).padStart(3, '0');
+    yv.textContent = Math.round(ballY(t));
+  }
+  function loop(now) {
+    if (!playing) return;
+    t += (now - last) / 1000; last = now;
+    if (t >= DURATION) t = 0;
+    show(); requestAnimationFrame(loop);
+  }
+  function setPlaying(p) {
+    playing = p;
+    playBtn.innerHTML = p ? '&#10074;&#10074;' : '&#9654;';
+    playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+    if (p) { last = performance.now(); requestAnimationFrame(loop); }
+  }
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  range.addEventListener('input', () => { setPlaying(false); t = +range.value; show(); });
+
+  readColors();
+  const start = () => { readColors(); show(); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setPlaying(true); };
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(start);
+  show();
+
+  const copy = document.getElementById('copy');
+  copy.addEventListener('click', async () => {
+    const text = document.getElementById('cardtext').textContent;
+    try { await navigator.clipboard.writeText(text); copy.textContent = 'Copied'; }
+    catch { const r = document.createRange(); r.selectNodeContents(document.getElementById('cardtext')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copy.textContent = 'Selected'; }
+    setTimeout(() => copy.textContent = 'Copy', 1800);
+  });
+})();
+</script>
+</body>
+</html>

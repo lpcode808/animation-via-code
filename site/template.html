@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animation via code</title>
+<meta name="description" content="Notes, prompts, a template and three demos for making short explainer videos by having an AI coding agent write code that draws every frame.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Courier+Prime:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --paper: oklch(0.965 0.018 85);
+  --paper-2: oklch(0.93 0.025 85);
+  --paper-3: oklch(0.89 0.03 85);
+  --ink: oklch(0.24 0.03 255);
+  --ink-2: oklch(0.42 0.03 255);
+  --ink-3: oklch(0.55 0.025 255);
+  --rule: oklch(0.8 0.045 235);
+  --rule-soft: oklch(0.88 0.03 235);
+  --pencil: oklch(0.56 0.18 28);
+  --pencil-soft: oklch(0.92 0.04 28);
+  --sage: oklch(0.5 0.08 155);
+
+  --display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+  --body: "Literata", Georgia, serif;
+  --mono: "Courier Prime", "Courier New", monospace;
+
+  --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 48px; --s6: 96px;
+  --gutter: clamp(16px, 4vw, 56px);
+  --ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1.0625rem/1.6 var(--body);
+  font-optical-sizing: auto;
+}
+a { color: var(--ink); text-decoration-color: var(--rule); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--pencil); }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--pencil); outline-offset: 3px; }
+code, kbd { font-family: var(--mono); font-size: 0.92em; background: var(--paper-2); padding: 0 0.25em; border-radius: 2px; }
+p { margin: 0 0 var(--s3); max-width: 68ch; }
+h1, h2, h3, h4 { font-family: var(--display); line-height: 1.05; margin: 0; letter-spacing: -0.01em; }
+
+/* ---------- the exposure-sheet frame: a gutter column of frame numbers ---------- */
+.wrap { max-width: 78rem; margin: 0 auto; padding: 0 var(--gutter); }
+.sheet {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  border-top: 1px solid var(--rule);
+}
+.sheet > .fr {
+  font: 700 0.8rem/1 var(--mono);
+  color: var(--ink-3);
+  padding-top: var(--s5);
+  border-right: 1px solid var(--rule);
+  letter-spacing: 0.04em;
+}
+.sheet > .fr span { display: block; color: var(--pencil); margin-bottom: var(--s1); }
+.sheet > .cell { padding: var(--s5) 0 var(--s6) var(--s4); min-width: 0; }
+@media (max-width: 720px) {
+  .sheet { grid-template-columns: 1fr; }
+  .sheet > .fr { border-right: 0; padding-top: var(--s4); }
+  .sheet > .cell { padding: var(--s3) 0 var(--s5); }
+}
+.kicker { font: 700 0.8rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--pencil); margin-bottom: var(--s3); }
+h2 { font-size: clamp(1.9rem, 3.6vw, 2.9rem); font-weight: 800; margin-bottom: var(--s4); max-width: 22ch; }
+h3 { font-size: 1.35rem; font-weight: 700; }
+
+/* ---------- top bar ---------- */
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); padding: var(--s3) 0; font: 400 0.9rem/1.3 var(--mono); color: var(--ink-2); flex-wrap: wrap; }
+.top nav { display: flex; gap: var(--s4); flex-wrap: wrap; }
+.top a { text-decoration: none; }
+.top a:hover { color: var(--pencil); }
+
+/* ---------- hero ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--s5); align-items: end; padding: var(--s5) 0 var(--s5); }
+@media (max-width: 960px) { .hero { grid-template-columns: 1fr; gap: var(--s4); } }
+.hero h1 { font-size: clamp(3rem, 8.5vw, 6.6rem); font-weight: 800; line-height: 0.9; letter-spacing: -0.035em; margin-bottom: var(--s4); }
+.hero h1 em { font-style: normal; color: var(--pencil); }
+.lede { font-size: 1.2rem; line-height: 1.5; max-width: 34ch; }
+.lede-2 { color: var(--ink-2); max-width: 46ch; }
+.hero .go { display: flex; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s4); }
+.btn {
+  font: 700 0.95rem/1 var(--mono); padding: 0.85em 1.1em; border-radius: 3px; text-decoration: none; cursor: pointer;
+  border: 1.5px solid var(--ink); background: var(--ink); color: var(--paper);
+  transition: transform 160ms var(--ease);
+}
+.btn:hover { transform: translateY(-1px); }
+.btn.quiet { background: transparent; color: var(--ink); }
+
+/* the scrubbable frame */
+.viewer { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 4px; padding: var(--s3); }
+.viewer canvas { width: 100%; height: auto; display: block; border-radius: 2px; background: var(--paper); }
+.scrub { display: grid; grid-template-columns: auto 1fr; gap: var(--s3); align-items: center; margin-top: var(--s3); }
+.play { width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; font: 700 0.85rem/1 var(--mono); }
+.track { position: relative; height: 2.6rem; }
+.track input { position: absolute; inset: 0; width: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+.track .bar { position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: var(--rule); }
+.track .fill { position: absolute; left: 0; top: 50%; height: 2px; background: var(--ink); }
+.track .head { position: absolute; top: 18%; bottom: 18%; width: 3px; background: var(--pencil); margin-left: -1.5px; }
+.track .tick { position: absolute; top: 30%; bottom: 30%; width: 1px; background: var(--ink-3); }
+.track .tick.beat { top: 15%; bottom: 15%; background: var(--rule); width: 2px; }
+.readout { display: flex; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s2); font: 400 0.85rem/1.3 var(--mono); color: var(--ink-2); }
+.readout b { color: var(--ink); font-weight: 700; }
+.legend-inline { font: 400 0.8rem/1.3 var(--mono); color: var(--ink-3); margin-top: var(--s2); }
+.legend-inline i { display: inline-block; width: 2px; height: 0.9em; vertical-align: -0.1em; margin: 0 0.35em 0 0.8em; background: var(--ink-3); }
+.legend-inline i.b { background: var(--rule); width: 3px; }
+.legend-inline i:first-child { margin-left: 0; }
+
+/* ---------- grown vs built ---------- */
+.versus { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--rule); margin: var(--s4) 0; max-width: 60rem; }
+.versus > div { padding: var(--s4); }
+.versus > div + div { border-left: 1px solid var(--rule); background: var(--paper-2); }
+.versus h3 { margin-bottom: var(--s2); }
+.versus p { margin: 0; color: var(--ink-2); }
+@media (max-width: 640px) { .versus { grid-template-columns: 1fr; } .versus > div + div { border-left: 0; border-top: 1px solid var(--rule); } }
+
+/* ---------- pipeline ---------- */
+.pipe { list-style: none; padding: 0; margin: var(--s4) 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); counter-reset: step; max-width: 66rem; }
+.pipe li { counter-increment: step; padding: var(--s3) var(--s3) var(--s3) 0; border-top: 2px solid var(--ink); position: relative; }
+.pipe li + li { padding-left: var(--s3); border-left: 1px dashed var(--rule); }
+.pipe li::before { content: counter(step, decimal-leading-zero); display: block; font: 700 0.8rem/1 var(--mono); color: var(--pencil); margin-bottom: var(--s2); }
+.pipe b { display: block; font-family: var(--display); font-size: 1.08rem; line-height: 1.15; margin-bottom: var(--s1); }
+.pipe span { font-size: 0.92rem; color: var(--ink-2); line-height: 1.4; display: block; }
+@media (max-width: 900px) {
+  .pipe { grid-template-columns: 1fr 1fr; }
+  .pipe li, .pipe li + li { border-left: 0; padding-left: 0; padding-right: var(--s3); }
+}
+.keyidea { font-family: var(--display); font-size: clamp(1.3rem, 2.4vw, 1.75rem); font-weight: 700; line-height: 1.25; max-width: 32ch; margin: var(--s5) 0 var(--s3); }
+.keyidea code { font-size: 0.85em; }
+
+/* ---------- demos ---------- */
+.demo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s4) var(--s5); padding: var(--s5) 0; border-bottom: 1px solid var(--rule-soft); }
+.demo:first-of-type { padding-top: var(--s3); }
+.demo:last-of-type { border-bottom: 0; }
+.demo video { width: 100%; height: auto; display: block; background: var(--ink); border-radius: 3px; }
+.demo h3 { font-size: 1.6rem; margin-bottom: var(--s2); }
+.demo .len { font: 700 0.8rem/1 var(--mono); color: var(--pencil); margin-bottom: var(--s3); display: block; }
+.demo dl { margin: var(--s3) 0; display: grid; gap: var(--s3); }
+.demo dt { font: 700 0.78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); }
+.demo dd { margin: var(--s1) 0 0; }
+.demo .links { font: 400 0.9rem/1.4 var(--mono); display: flex; gap: var(--s3); flex-wrap: wrap; }
+@media (max-width: 860px) { .demo { grid-template-columns: 1fr; } }
+.caught { background: var(--pencil-soft); padding: var(--s4); border-radius: 3px; margin-top: var(--s4); max-width: 60rem; }
+.caught h3 { font-size: 1.15rem; margin-bottom: var(--s3); }
+.caught ul { margin: 0; padding-left: 1.2em; }
+.caught li { margin-bottom: var(--s2); max-width: 70ch; }
+
+/* ---------- start here ---------- */
+.steps { list-style: none; padding: 0; margin: 0; max-width: 62rem; }
+.steps li { display: grid; grid-template-columns: 3.5rem 1fr; gap: var(--s3); padding: var(--s4) 0; border-bottom: 1px solid var(--rule-soft); }
+.steps li:first-child { padding-top: 0; }
+.steps .n { font: 800 2.4rem/0.9 var(--display); color: var(--rule); }
+.steps h3 { margin-bottom: var(--s1); }
+.steps p { margin: 0; color: var(--ink-2); }
+
+/* ---------- prompt card ---------- */
+.card-wrap { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--s5); align-items: start; }
+@media (max-width: 900px) { .card-wrap { grid-template-columns: 1fr; } }
+.promptcard { background: var(--ink); color: var(--paper); border-radius: 4px; padding: var(--s4); position: relative; }
+.promptcard .label { font: 700 0.75rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--rule); margin-bottom: var(--s3); display: flex; justify-content: space-between; align-items: center; gap: var(--s3); }
+.promptcard pre { margin: 0; font: 400 1.05rem/1.6 var(--mono); white-space: pre-wrap; word-break: break-word; }
+.copy { font: 700 0.78rem/1 var(--mono); background: var(--paper); color: var(--ink); border: 0; padding: 0.6em 0.9em; border-radius: 2px; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.promptcard + p { margin-top: var(--s3); color: var(--ink-2); font-size: 0.95rem; }
+.plist { list-style: none; padding: 0; margin: 0; }
+.plist li { padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
+.plist li:first-child { padding-top: 0; }
+.plist a { font-family: var(--display); font-weight: 700; font-size: 1.1rem; }
+.plist span { display: block; color: var(--ink-2); font-size: 0.95rem; margin-top: var(--s1); }
+
+/* ---------- guide ---------- */
+.tags { display: flex; gap: var(--s4); flex-wrap: wrap; font-size: 0.95rem; margin-bottom: var(--s4); color: var(--ink-2); max-width: 66rem; }
+.tags > span { display: flex; gap: var(--s2); align-items: baseline; }
+.tag { font: 700 0.72rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 0.35em 0.5em; border-radius: 2px; white-space: nowrap; display: inline-block; }
+.tag-confirmed { background: var(--ink); color: var(--paper); }
+.tag-tentative { border: 1.5px dashed var(--ink-3); color: var(--ink-2); padding: calc(0.35em - 1.5px) calc(0.5em - 1.5px); }
+.tag-contested { background: var(--pencil-soft); color: var(--pencil); }
+.stagenav { font: 400 0.85rem/1.8 var(--mono); display: flex; flex-wrap: wrap; gap: 0 var(--s4); margin-bottom: var(--s4); }
+.stagenav a { text-decoration: none; color: var(--ink-2); }
+.stagenav a:hover { color: var(--pencil); }
+.stage { border-top: 1px solid var(--rule); max-width: 66rem; }
+.stage:last-of-type { border-bottom: 1px solid var(--rule); }
+.stage summary { display: grid; grid-template-columns: 3.2rem 1fr auto; gap: var(--s3); align-items: baseline; padding: var(--s3) 0; cursor: pointer; list-style: none; }
+.stage summary::-webkit-details-marker { display: none; }
+.stage summary:hover .sname { color: var(--pencil); }
+.sn { font: 700 0.9rem/1 var(--mono); color: var(--pencil); }
+.sname { font: 700 clamp(1.2rem, 2.2vw, 1.5rem)/1.15 var(--display); transition: color 160ms var(--ease); }
+.scount { font: 400 0.8rem/1 var(--mono); color: var(--ink-3); white-space: nowrap; }
+.scount::after { content: " +"; color: var(--ink); font-weight: 700; }
+.stage[open] .scount::after { content: " \2212"; }
+@media (max-width: 560px) { .stage summary { grid-template-columns: 2.4rem 1fr; } .scount { grid-column: 2; } }
+.sbody { padding: 0 0 var(--s5) 3.2rem; }
+@media (max-width: 560px) { .sbody { padding-left: 0; } }
+.sintro { font-style: italic; color: var(--ink-2); }
+.lessons { list-style: none; padding: 0; margin: var(--s4) 0; }
+.lesson { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr); gap: var(--s3); padding: var(--s2) 0; align-items: baseline; line-height: 1.5; }
+.lesson .tag { justify-self: start; }
+.lt { font-weight: 600; }
+.ls { color: var(--ink-2); }
+@media (max-width: 560px) { .lesson { grid-template-columns: 1fr; gap: var(--s1); } }
+.pits { background: var(--paper-2); padding: var(--s3) var(--s4); border-radius: 3px; margin: var(--s4) 0; max-width: 60rem; }
+.pits h4 { font: 700 0.78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); margin-bottom: var(--s2); }
+.pits ul { margin: 0; padding-left: 1.1em; columns: 2 22rem; column-gap: var(--s5); }
+.pits li { margin-bottom: var(--s1); break-inside: avoid; }
+.more { font: 700 0.9rem/1 var(--mono); }
+.more::after { content: " \2192"; }
+.appx { margin-top: var(--s4); color: var(--ink-2); }
+
+/* ---------- commands ---------- */
+.cmd { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 3px; padding: var(--s3) var(--s4); overflow-x: auto; max-width: 52rem; margin: var(--s3) 0 var(--s4); }
+.cmd pre { margin: 0; font: 400 0.92rem/1.65 var(--mono); }
+.cmd .c { color: var(--ink-3); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); max-width: 66rem; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+
+.caution { font-family: var(--display); font-size: clamp(1.25rem, 2.3vw, 1.6rem); font-weight: 700; line-height: 1.3; max-width: 36ch; }
+
+/* ---------- footer ---------- */
+footer { border-top: 2px solid var(--ink); padding: var(--s5) 0 var(--s6); font-size: 0.95rem; color: var(--ink-2); }
+footer .cols { gap: var(--s4) var(--s5); }
+footer h4 { font: 700 0.78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink); margin-bottom: var(--s2); }
+footer ul { margin: 0; padding-left: 1.1em; }
+footer li { margin-bottom: var(--s2); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <span>animation-via-code</span>
+    <nav aria-label="Sections">
+      <a href="#demos">Demos</a>
+      <a href="#start">Start</a>
+      <a href="#prompts">Prompts</a>
+      <a href="#guide">Guide</a>
+      <a href="https://github.com/lpcode808/animation-via-code">Repo on GitHub</a>
+    </nav>
+  </header>
+
+  <section class="hero" aria-labelledby="title">
+    <div>
+      <h1 id="title">Animation <em>via</em> code</h1>
+      <p class="lede">Short explainer videos made by asking an AI coding agent to write code that draws every frame.</p>
+      <p class="lede-2">Notes from a few dozen pieces, mostly 15 seconds to 3 minutes: what worked, what broke, and how sure we are of each. Plus prompts, a tiny template and three demos with their source. Not a framework.</p>
+      <div class="go">
+        <a class="btn" href="#prompts">Copy the prompt</a>
+        <a class="btn quiet" href="https://github.com/lpcode808/animation-via-code">Read the repo</a>
+      </div>
+    </div>
+
+    <figure class="viewer" style="margin:0" aria-label="A bouncing ball drawn from time alone">
+      <canvas id="ball" width="1920" height="1080" role="img" aria-label="A ball drops onto a floor and bounces lower each time, with a caption for each beat."></canvas>
+      <div class="scrub">
+        <button class="play" id="play" aria-label="Play">&#9654;</button>
+        <div class="track" id="track">
+          <div class="bar"></div><div class="fill" id="fill"></div>
+          <div id="ticks"></div>
+          <div class="head" id="head"></div>
+          <input type="range" id="t" min="0" max="6" step="0.0333333" value="0" aria-label="Time in seconds">
+        </div>
+      </div>
+      <div class="readout" aria-live="off">
+        <span>renderAt(<b id="tv">0.00</b>)</span>
+        <span>frame <b id="fv">000</b> of 180</span>
+        <span>ball y <b id="yv">140</b> px</span>
+      </div>
+      <figcaption class="legend-inline"><i></i>bounce, where the sound lands <i class="b"></i>caption change &middot; drag anywhere: the picture comes from <code>t</code> alone</figcaption>
+    </figure>
+  </section>
+</div>
+
+<div class="wrap">
+  <section class="sheet" id="why">
+    <div class="fr"><span>01</span>WHY</div>
+    <div class="cell">
+      <p class="kicker">Why code instead of a video model</p>
+      <h2>A video model grows a clip. Code builds one.</h2>
+      <div class="versus">
+        <div><h3>Grown</h3><p>Fast and beautiful, and hard to correct. Ask for a fix and you get a different clip.</p></div>
+        <div><h3>Built</h3><p>Every shape, number and caption is exact, editable and repeatable. A reviewer says the arrow points the wrong way; you change one line and re-render.</p></div>
+      </div>
+      <p>That matters for teaching. If a caption says "3 + 4 = 7", the diagram can be checked against it. The cost is that you, or the agent, have to describe things precisely, and rendering takes minutes, not seconds.</p>
+
+      <p class="keyidea">Each frame is a pure function of time. <code>renderAt(t)</code> draws the same picture for the same <code>t</code>, no matter what came before.</p>
+      <p>That one rule is what lets you render in parallel, re-render one second, and trust that what you previewed is what you ship. The ball above works this way: drag to any point and it's drawn fresh.</p>
+
+      <ol class="pipe" aria-label="The usual pipeline">
+        <li><b>Prompt</b><span>Topic, audience, style, length.</span></li>
+        <li><b>Scene code</b><span>The agent writes <code>renderAt(t)</code>.</span></li>
+        <li><b>Frames</b><span>A headless browser captures each one, 30 or 60 fps.</span></li>
+        <li><b>Sound</b><span>numpy writes music and effects as raw samples.</span></li>
+        <li><b>MP4</b><span>ffmpeg joins frames and audio.</span></li>
+        <li><b>Review</b><span>Contact sheets, a fresh reviewer, fix, re-render.</span></li>
+      </ol>
+      <p>That's the most common route, not the only one. Pieces here also used SVG rasterizers, skia-python with no browser (how the demos were made), Manim, Remotion and headless Blender. <a href="{{GH}}guide/2-renderer.md">Pick for the subject.</a></p>
+    </div>
+  </section>
+
+  <section class="sheet" id="demos">
+    <div class="fr"><span>02</span>DEMOS</div>
+    <div class="cell">
+      <p class="kicker">Three demos, with their source</p>
+      <h2>Each scene checks itself before it renders.</h2>
+      <p>Drawn frame by frame in Python with skia-python. Each file is one scene: a duration, a <code>draw(canvas, t)</code> that's a pure function of time, a <code>checks()</code> that must pass before anything renders, and a soundtrack written as numpy samples.</p>
+
+      <article class="demo">
+        <video controls preload="metadata" playsinline src="demos/bouncing_ball.mp4#t=3" aria-label="Bouncing ball demo"></video>
+        <div>
+          <h3>Bouncing ball</h3>
+          <span class="len">8 s</span>
+          <dl>
+            <div><dt>What it shows</dt><dd>Physics computed from <code>t</code>, and sound placed from the same physics.</dd></div>
+            <div><dt>What its check proves</dt><dd>The first landing falls inside the "speeds up" caption, so words and picture agree.</dd></div>
+          </dl>
+          <p class="links"><a href="{{GH}}demos/bouncing_ball.py">bouncing_ball.py</a><a href="demos/bouncing_ball-sheet.jpg">contact sheet</a></p>
+        </div>
+      </article>
+
+      <article class="demo">
+        <video controls preload="metadata" playsinline src="demos/pythagorean_proof.mp4#t=20" aria-label="Pythagorean proof demo"></video>
+        <div>
+          <h3>Pythagorean proof</h3>
+          <span class="len">30 s</span>
+          <dl>
+            <div><dt>What it shows</dt><dd>Four triangles rearranged inside one square, with a live area readout.</dd></div>
+            <div><dt>What its check proves</dt><dd>The uncovered area, sampled from the triangles as drawn, is c² before and exactly a² + b² after. No triangle turns or flips.</dd></div>
+          </dl>
+          <p class="links"><a href="{{GH}}demos/pythagorean_proof.py">pythagorean_proof.py</a><a href="demos/pythagorean_proof-sheet.jpg">contact sheet</a></p>
+        </div>
+      </article>
+
+      <article class="demo">
+        <video controls preload="metadata" playsinline loop src="demos/water_cycle.mp4#t=6" aria-label="Water cycle demo"></video>
+        <div>
+          <h3>Water cycle</h3>
+          <span class="len">20 s loop</span>
+          <dl>
+            <div><dt>What it shows</dt><dd>Evaporation, condensation, precipitation and collection.</dd></div>
+            <div><dt>What its check proves</dt><dd>The last frame matches the first, so it loops with no jump.</dd></div>
+          </dl>
+          <p class="links"><a href="{{GH}}demos/water_cycle.py">water_cycle.py</a><a href="demos/water_cycle-sheet.jpg">contact sheet</a></p>
+        </div>
+      </article>
+
+      <div class="caught">
+        <h3>What reviewing them caught</h3>
+        <ul>
+          <li><b>Bouncing ball.</b> The caption covered the ball once it came to rest, and "It speeds up as it falls" appeared after the first bounce. The floor moved up, the beats were retimed to the physics, and a check now pins them together.</li>
+          <li><b>Pythagorean proof.</b> The first draft placed two triangles wrong. The geometry checks failed before any frame rendered.</li>
+          <li><b>Water cycle.</b> Three fade windows didn't wrap round the loop's end, so the seam check failed until they did. The first caption was also too wide, and rain fell through the mountain.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="start">
+    <div class="fr"><span>03</span>START</div>
+    <div class="cell">
+      <p class="kicker">Start here</p>
+      <h2>Five steps, in the order they pay off.</h2>
+      <ol class="steps">
+        <li><span class="n">1</span><div><h3><a href="#prompts">Try it with a prompt</a></h3><p>Paste the prompt card into a coding agent that can run a browser and ffmpeg, with your topic filled in. Expect 10 to 20 minutes for a 20 to 30 second clip.</p></div></li>
+        <li><span class="n">2</span><div><h3><a href="#demos">Watch and read the demos</a></h3><p>Three short videos with their full source, each with a check that runs before any frame renders.</p></div></li>
+        <li><span class="n">3</span><div><h3><a href="{{GH}}template/">Run the template</a></h3><p>A 6-second browser version of the bouncing ball in about 200 lines: one HTML scene, a render script, a synth soundtrack and a mux step. Its browser render hasn't been run yet, so expect to fix small things.</p></div></li>
+        <li><span class="n">4</span><div><h3><a href="#guide">Read the guide before your second video</a></h3><p>Filed by stage, from planning to companion pages. Each stage has its lessons, then the bugs that cost time there.</p></div></li>
+        <li><span class="n">5</span><div><h3><a href="#prompts">Steal a prompt</a></h3><p>Demo prompts, a review pass, a long one-shot film prompt, and a brief for turning a video of yourself talking into a motion-graphics edit.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sheet" id="prompts">
+    <div class="fr"><span>04</span>PROMPTS</div>
+    <div class="cell">
+      <p class="kicker">Prompts that worked</p>
+      <h2>Start short. Reach for the long ones later.</h2>
+      <div class="card-wrap">
+        <div>
+          <div class="promptcard">
+            <div class="label"><span>The prompt card</span><button class="copy" id="copy" type="button">Copy</button></div>
+            <pre id="cardtext">{{CARD}}</pre>
+          </div>
+          <p>Fill in the brackets and paste it into a coding agent that can run a headless browser and ffmpeg. Captions-only pieces were consistently the fastest; narration made every piece take much longer.</p>
+        </div>
+        <ul class="plist">
+{{PROMPTS}}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="guide">
+    <div class="fr"><span>05</span>GUIDE</div>
+    <div class="cell">
+      <p class="kicker">The guide, by stage</p>
+      <h2>{{NLESSONS}} lessons and {{NPITFALLS}} pitfalls, filed where you'll hit them.</h2>
+      <p>Open a stage to see its lessons in one line each. The full text, with the examples behind each one, is in the repo.</p>
+      <div class="tags">
+        <span><span class="tag tag-confirmed">confirmed</span> held up across many pieces</span>
+        <span><span class="tag tag-tentative">tentative</span> seen once or twice</span>
+        <span><span class="tag tag-contested">contested</span> the notes disagree</span>
+      </div>
+      <nav class="stagenav" aria-label="Stages">{{STAGE_NAV}}</nav>
+{{STAGES}}
+      <p class="appx">The <a href="{{GH}}guide/appendix.md">appendix</a> covers working with the agent, cost and time, and where the notes disagree.</p>
+    </div>
+  </section>
+
+  <section class="sheet" id="run">
+    <div class="fr"><span>06</span>RUN</div>
+    <div class="cell">
+      <p class="kicker">Run it yourself</p>
+      <h2>Two ways to render on your own machine.</h2>
+      <div class="cols">
+        <div>
+          <h3>The demos (tested)</h3>
+          <p>Python 3 with numpy and skia-python, plus ffmpeg. On Ubuntu, skia needs the EGL library even for CPU rendering.</p>
+          <div class="cmd"><pre><span class="c"># install</span>
+pip install numpy skia-python
+sudo apt-get install -y libegl1 ffmpeg fonts-dejavu-core
+<span class="c"># render one</span>
+cd demos
+python3 build.py bouncing_ball</pre></div>
+          <p>Frames are cached in <code>work/&lt;name&gt;</code>. Delete that folder after changing a scene's <code>draw()</code>, or the old frames are reused.</p>
+        </div>
+        <div>
+          <h3>The template (browser)</h3>
+          <p>Node 18+, Python 3 with numpy, and ffmpeg. Not yet run end to end in a browser; if a step fails, the demos are the tested version of the same idea.</p>
+          <div class="cmd"><pre>cd template
+npm install
+npx playwright install chromium
+node render.mjs     <span class="c"># 180 frames</span>
+python3 audio.py    <span class="c"># audio.wav</span>
+bash mux.sh         <span class="c"># out.mp4</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="caution">
+    <div class="fr"><span>07</span>NOTE</div>
+    <div class="cell">
+      <p class="kicker">A caution on using these notes</p>
+      <p class="caution">Don't paste the whole guide into an agent's standing instructions.</p>
+      <p>When that was tried, every new video converged on the same pipeline and look. Give the agent the short prompt, and reach for the lessons when something breaks or you want to push past the default.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="cols">
+      <div>
+        <h4>Credits</h4>
+        <ul>
+          <li>The beat order for explainers (analogy, diagram, example, plain English, technical) is adapted from BetterExplained's ADEPT method.</li>
+          <li>Some hand-drawn-style pieces used a public third-party starter kit, ClaudeAnimationBase, built on <a href="https://github.com/acamposuribe/p5.brush">p5.brush</a> (MIT). Credit and license belong to their authors; nothing from either is included here.</li>
+          <li>Interactive explainer pages were influenced by Bret Victor's <em>Explorable Explanations</em>.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>License</h4>
+        <p>Code (the demos, the template, and code blocks in the prompts) is under the <a href="{{GH}}LICENSE">MIT License</a>. Text and the demo videos are under <a href="{{GH}}LICENSE-docs.md">CC BY 4.0</a>: reuse them with credit.</p>
+        <p><a href="https://github.com/lpcode808/animation-via-code">github.com/lpcode808/animation-via-code</a> &middot; <a href="{{GH}}EXAMPLES.md">the pieces these lessons came from</a> &middot; <a href="{{GH}}CONTRIBUTING.md">contributing</a></p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* The hero frame uses the template's own physics: a pure function of t. */
+(() => {
+  const W = 1920, H = 1080, DURATION = 6, FPS = 30;
+  const G = 400, FLOOR = 660, TOP = 140, E = 0.6, DROP_AT = 0.8;
+  const BEATS = [
+    { start: 0.0, end: 1.3, caption: 'A ball is dropped.' },
+    { start: 1.3, end: 2.6, caption: 'It speeds up as it falls.' },
+    { start: 2.6, end: 6.0, caption: 'Each bounce loses height.' },
+  ];
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const ease = u => u * u * (3 - 2 * u);
+
+  function ballY(t) {
+    const h = FLOOR - TOP; let tt = t - DROP_AT;
+    if (tt < 0) return TOP;
+    const fall = Math.sqrt(2 * h / G);
+    if (tt < fall) return TOP + 0.5 * G * tt * tt;
+    tt -= fall;
+    let v = G * fall * E;
+    while (v > 30) {
+      const flight = 2 * v / G;
+      if (tt < flight) return FLOOR - (v * tt - 0.5 * G * tt * tt);
+      tt -= flight; v *= E;
+    }
+    return FLOOR;
+  }
+  const bounces = [];
+  { const h = FLOOR - TOP; let t = DROP_AT + Math.sqrt(2 * h / G), v = G * Math.sqrt(2 * h / G) * E;
+    while (v > 30 && t < DURATION) { bounces.push(t); t += 2 * v / G; v *= E; } }
+
+  const cv = document.getElementById('ball'), ctx = cv.getContext('2d');
+  const C = {};
+  const readColors = () => ['--paper','--paper-3','--ink','--ink-3','--rule','--rule-soft','--pencil'].forEach(k => C[k] = css(k));
+
+  function renderAt(t) {
+    ctx.fillStyle = C['--paper']; ctx.fillRect(0, 0, W, H);
+    // exposure-sheet rules behind the action
+    ctx.strokeStyle = C['--rule-soft']; ctx.lineWidth = 2;
+    for (let y = 60; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    // floor
+    ctx.fillStyle = C['--ink']; ctx.fillRect(160, FLOOR, W - 320, 6);
+    // shadow shrinks as the ball rises
+    const y = ballY(t);
+    const s = 1 - (FLOOR - y) / 900;
+    ctx.fillStyle = C['--paper-3'];
+    ctx.beginPath(); ctx.ellipse(W / 2, FLOOR + 3, 62 * s, 12 * s, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = C['--pencil'];
+    ctx.beginPath(); ctx.arc(W / 2, y - 34, 34, 0, 7); ctx.fill();
+    // captions fade on the beat's own clock
+    for (const b of BEATS) {
+      if (t < b.start || t >= b.end) continue;
+      const a = Math.min(clamp((t - b.start) / 0.25), clamp((b.end - t) / 0.25));
+      ctx.save(); ctx.globalAlpha *= ease(a);
+      ctx.font = '700 72px "Bricolage Grotesque", sans-serif';
+      ctx.textAlign = 'center';
+      const w = ctx.measureText(b.caption).width + 80;
+      ctx.fillStyle = C['--ink']; ctx.fillRect((W - w) / 2, 810, w, 100);
+      ctx.fillStyle = C['--paper']; ctx.fillText(b.caption, W / 2, 884);
+      ctx.restore();
+    }
+  }
+
+  const range = document.getElementById('t'), head = document.getElementById('head'), fill = document.getElementById('fill');
+  const tv = document.getElementById('tv'), fv = document.getElementById('fv'), yv = document.getElementById('yv');
+  const playBtn = document.getElementById('play');
+  const ticks = document.getElementById('ticks');
+  bounces.forEach(b => { const d = document.createElement('div'); d.className = 'tick'; d.style.left = (b / DURATION * 100) + '%'; ticks.appendChild(d); });
+  BEATS.slice(1).forEach(b => { const d = document.createElement('div'); d.className = 'tick beat'; d.style.left = (b.start / DURATION * 100) + '%'; ticks.appendChild(d); });
+
+  let t = 0, playing = false, last = 0;
+  function show() {
+    renderAt(t);
+    const p = (t / DURATION * 100) + '%';
+    head.style.left = p; fill.style.width = p;
+    range.value = t;
+    tv.textContent = t.toFixed(2);
+    fv.textContent = String(Math.min(180, Math.round(t * FPS))).padStart(3, '0');
+    yv.textContent = Math.round(ballY(t));
+  }
+  function loop(now) {
+    if (!playing) return;
+    t += (now - last) / 1000; last = now;
+    if (t >= DURATION) t = 0;
+    show(); requestAnimationFrame(loop);
+  }
+  function setPlaying(p) {
+    playing = p;
+    playBtn.innerHTML = p ? '&#10074;&#10074;' : '&#9654;';
+    playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+    if (p) { last = performance.now(); requestAnimationFrame(loop); }
+  }
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  range.addEventListener('input', () => { setPlaying(false); t = +range.value; show(); });
+
+  readColors();
+  const start = () => { readColors(); show(); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setPlaying(true); };
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(start);
+  show();
+
+  const copy = document.getElementById('copy');
+  copy.addEventListener('click', async () => {
+    const text = document.getElementById('cardtext').textContent;
+    try { await navigator.clipboard.writeText(text); copy.textContent = 'Copied'; }
+    catch { const r = document.createRange(); r.selectNodeContents(document.getElementById('cardtext')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copy.textContent = 'Selected'; }
+    setTimeout(() => copy.textContent = 'Copy', 1800);
+  });
+})();
+</script>
+</body>
+</html>

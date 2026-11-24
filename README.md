@@ -1,5 +1,7 @@
 # Animation via code
 
+**[Browse it as a page](https://lpcode808.github.io/animation-via-code/)**: the demos, every lesson in one line, and the prompts.
+
 Short explainer videos made by asking an AI coding agent to *write code that draws every frame*, instead of asking an image or video model to generate pixels.
 
 This repo collects what was learned making a few dozen of these pieces (mostly 15 seconds to 3 minutes: science explainers, music lessons, product walkthroughs, talk translations, trailers). It is a set of notes, prompts, a tiny template and three small demos, not a framework.
@@ -66,6 +68,7 @@ Don't paste the whole guide into an agent's standing instructions. When that was
 | [template/](template/) | Minimal browser pipeline |
 | [prompts/](prompts/) | Prompts that worked, ready to copy |
 | [EXAMPLES.md](EXAMPLES.md) | The pieces these lessons came from, by renderer, with the lesson each added |
+| [index.html](index.html), [site/](site/) | The [front page](https://lpcode808.github.io/animation-via-code/), built from `guide/` and `prompts/` by `python3 site/build_site.py .` |
 
 ## Credits
 
