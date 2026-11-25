@@ -33,6 +33,7 @@
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+body { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body {
   margin: 0;
@@ -65,7 +66,7 @@ h1, h2, h3, h4 { font-family: var(--display); line-height: 1.05; margin: 0; lett
 .sheet > .fr span { display: block; color: var(--pencil); margin-bottom: var(--s1); }
 .sheet > .cell { padding: var(--s5) 0 var(--s6) var(--s4); min-width: 0; }
 @media (max-width: 720px) {
-  .sheet { grid-template-columns: 1fr; }
+  .sheet { grid-template-columns: minmax(0, 1fr); }
   .sheet > .fr { border-right: 0; padding-top: var(--s4); }
   .sheet > .cell { padding: var(--s3) 0 var(--s5); }
 }
@@ -81,7 +82,7 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 
 /* ---------- hero ---------- */
 .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--s5); align-items: end; padding: var(--s5) 0 var(--s5); }
-@media (max-width: 960px) { .hero { grid-template-columns: 1fr; gap: var(--s4); } }
+@media (max-width: 960px) { .hero { grid-template-columns: minmax(0, 1fr); gap: var(--s4); } }
 .hero h1 { font-size: clamp(3rem, 8.5vw, 6.6rem); font-weight: 800; line-height: 0.9; letter-spacing: -0.035em; margin-bottom: var(--s4); }
 .hero h1 em { font-style: normal; color: var(--pencil); }
 .lede { font-size: 1.2rem; line-height: 1.5; max-width: 34ch; }
@@ -115,12 +116,12 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 .legend-inline i:first-child { margin-left: 0; }
 
 /* ---------- grown vs built ---------- */
-.versus { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--rule); margin: var(--s4) 0; max-width: 60rem; }
+.versus { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; border: 1px solid var(--rule); margin: var(--s4) 0; max-width: 60rem; }
 .versus > div { padding: var(--s4); }
 .versus > div + div { border-left: 1px solid var(--rule); background: var(--paper-2); }
 .versus h3 { margin-bottom: var(--s2); }
 .versus p { margin: 0; color: var(--ink-2); }
-@media (max-width: 640px) { .versus { grid-template-columns: 1fr; } .versus > div + div { border-left: 0; border-top: 1px solid var(--rule); } }
+@media (max-width: 640px) { .versus { grid-template-columns: minmax(0, 1fr); } .versus > div + div { border-left: 0; border-top: 1px solid var(--rule); } }
 
 /* ---------- pipeline ---------- */
 .pipe { list-style: none; padding: 0; margin: var(--s4) 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); counter-reset: step; max-width: 66rem; }
@@ -130,7 +131,7 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 .pipe b { display: block; font-family: var(--display); font-size: 1.08rem; line-height: 1.15; margin-bottom: var(--s1); }
 .pipe span { font-size: 0.92rem; color: var(--ink-2); line-height: 1.4; display: block; }
 @media (max-width: 900px) {
-  .pipe { grid-template-columns: 1fr 1fr; }
+  .pipe { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .pipe li, .pipe li + li { border-left: 0; padding-left: 0; padding-right: var(--s3); }
 }
 .keyidea { font-family: var(--display); font-size: clamp(1.3rem, 2.4vw, 1.75rem); font-weight: 700; line-height: 1.25; max-width: 32ch; margin: var(--s5) 0 var(--s3); }
@@ -147,7 +148,7 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 .demo dt { font: 700 0.78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); }
 .demo dd { margin: var(--s1) 0 0; }
 .demo .links { font: 400 0.9rem/1.4 var(--mono); display: flex; gap: var(--s3); flex-wrap: wrap; }
-@media (max-width: 860px) { .demo { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .demo { grid-template-columns: minmax(0, 1fr); } }
 .caught { background: var(--pencil-soft); padding: var(--s4); border-radius: 3px; margin-top: var(--s4); max-width: 60rem; }
 .caught h3 { font-size: 1.15rem; margin-bottom: var(--s3); }
 .caught ul { margin: 0; padding-left: 1.2em; }
@@ -163,7 +164,7 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 
 /* ---------- prompt card ---------- */
 .card-wrap { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--s5); align-items: start; }
-@media (max-width: 900px) { .card-wrap { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .card-wrap { grid-template-columns: minmax(0, 1fr); } }
 .promptcard { background: var(--ink); color: var(--paper); border-radius: 4px; padding: var(--s4); position: relative; }
 .promptcard .label { font: 700 0.75rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--rule); margin-bottom: var(--s3); display: flex; justify-content: space-between; align-items: center; gap: var(--s3); }
 .promptcard pre { margin: 0; font: 400 1.05rem/1.6 var(--mono); white-space: pre-wrap; word-break: break-word; }
@@ -204,7 +205,7 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 .lesson .tag { justify-self: start; }
 .lt { font-weight: 600; }
 .ls { color: var(--ink-2); }
-@media (max-width: 560px) { .lesson { grid-template-columns: 1fr; gap: var(--s1); } }
+@media (max-width: 560px) { .lesson { grid-template-columns: minmax(0, 1fr); gap: var(--s1); } }
 .pits { background: var(--paper-2); padding: var(--s3) var(--s4); border-radius: 3px; margin: var(--s4) 0; max-width: 60rem; }
 .pits h4 { font: 700 0.78rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); margin-bottom: var(--s2); }
 .pits ul { margin: 0; padding-left: 1.1em; columns: 2 22rem; column-gap: var(--s5); }
@@ -217,8 +218,8 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 .cmd { background: var(--paper-2); border: 1px solid var(--rule); border-radius: 3px; padding: var(--s3) var(--s4); overflow-x: auto; max-width: 52rem; margin: var(--s3) 0 var(--s4); }
 .cmd pre { margin: 0; font: 400 0.92rem/1.65 var(--mono); }
 .cmd .c { color: var(--ink-3); }
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); max-width: 66rem; }
-@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s5); max-width: 66rem; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } }
 
 .caution { font-family: var(--display); font-size: clamp(1.25rem, 2.3vw, 1.6rem); font-weight: 700; line-height: 1.3; max-width: 36ch; }
 
@@ -370,7 +371,7 @@ footer li { margin-bottom: var(--s2); }
       <ol class="steps">
         <li><span class="n">1</span><div><h3><a href="#prompts">Try it with a prompt</a></h3><p>Paste the prompt card into a coding agent that can run a browser and ffmpeg, with your topic filled in. Expect 10 to 20 minutes for a 20 to 30 second clip.</p></div></li>
         <li><span class="n">2</span><div><h3><a href="#demos">Watch and read the demos</a></h3><p>Three short videos with their full source, each with a check that runs before any frame renders.</p></div></li>
-        <li><span class="n">3</span><div><h3><a href="https://github.com/lpcode808/animation-via-code/blob/main/template/">Run the template</a></h3><p>A 6-second browser version of the bouncing ball in about 200 lines: one HTML scene, a render script, a synth soundtrack and a mux step. Its browser render hasn't been run yet, so expect to fix small things.</p></div></li>
+        <li><span class="n">3</span><div><h3><a href="https://github.com/lpcode808/animation-via-code/tree/main/template">Run the template</a></h3><p>A 6-second browser version of the bouncing ball in about 200 lines: one HTML scene, a render script, a synth soundtrack and a mux step. Its browser render hasn't been run yet, so expect to fix small things.</p></div></li>
         <li><span class="n">4</span><div><h3><a href="#guide">Read the guide before your second video</a></h3><p>Filed by stage, from planning to companion pages. Each stage has its lessons, then the bugs that cost time there.</p></div></li>
         <li><span class="n">5</span><div><h3><a href="#prompts">Steal a prompt</a></h3><p>Demo prompts, a review pass, a long one-shot film prompt, and a brief for turning a video of yourself talking into a motion-graphics edit.</p></div></li>
       </ol>
@@ -422,7 +423,7 @@ Captions, no narration.</pre>
   <summary>
     <span class="sn">01</span>
     <span class="sname">Plan the piece</span>
-    <span class="scount">14 lessons · 1 pitfalls</span>
+    <span class="scount">14 lessons · 1 pitfall</span>
   </summary>
   <div class="sbody">
     <p class="sintro">Decide what the video teaches, in what order and how long each idea holds, before any code exists. Most bad videos were bad plans drawn well.</p>

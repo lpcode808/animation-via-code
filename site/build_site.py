@@ -65,7 +65,7 @@ def stage_html(s):
   <summary>
     <span class="sn">{int(s["n"]):02d}</span>
     <span class="sname">{s["name"]}</span>
-    <span class="scount">{len(s["lessons"])} lessons · {len(s["pitfalls"])} pitfalls</span>
+    <span class="scount">{len(s["lessons"])} lessons · {len(s["pitfalls"])} pitfall{"" if len(s["pitfalls"])==1 else "s"}</span>
   </summary>
   <div class="sbody">
     <p class="sintro">{s["intro"]}</p>
