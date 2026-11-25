@@ -1,9 +1,10 @@
 """Writes audio.wav: a short synth pad on a bar grid plus sound effects placed
 from cues.json (written by render.mjs). No samples, just numpy."""
-import json, wave
+import json, math, wave
 import numpy as np
 
-SR, DUR = 48000, 6.0                    # keep in step with DURATION in scene.html
+CUES = json.load(open('cues.json'))
+SR, DUR = 48000, CUES['duration']       # the scene's DURATION, so audio and picture can't drift
 t = np.arange(int(SR * DUR)) / SR
 mix_music = np.zeros_like(t)
 mix_fx = np.zeros_like(t)
@@ -18,8 +19,9 @@ def env(n, attack=0.01, release=0.05):
 
 # Music: 120 bpm, so one bar = 2 s. (The captions change at 1.3 s and 2.6 s to follow the physics, not the bars.)
 chords = [[220.0, 277.18, 329.63], [196.0, 246.94, 293.66], [174.61, 220.0, 261.63]]
-for bar, chord in enumerate(chords):
-    s, n = int(bar * 2 * SR), int(2 * SR)
+for bar in range(math.ceil(DUR / 2)):    # loop the three chords for any length
+    chord = chords[bar % len(chords)]
+    s = int(bar * 2 * SR); n = min(int(2 * SR), len(t) - s)
     seg = np.zeros(n)
     for f in chord:
         for detune in (-0.3, 0.0, 0.3):  # detuned stack, random phases: no pulsing
@@ -28,7 +30,7 @@ for bar, chord in enumerate(chords):
     mix_music[s:s + n] += 0.03 * seg * env(n, 0.3, 0.4)
 
 # Effects from the picture's cues.
-for c in json.load(open('cues.json')):
+for c in CUES['cues']:
     s = int(c['t'] * SR)
     if c['type'] == 'bounce':
         n = int(0.12 * SR); x = t[:n]

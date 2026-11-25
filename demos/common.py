@@ -142,6 +142,11 @@ def mux(out_mp4, wav):
                        capture_output=True, text=True).stderr
     peak = [l for l in r.splitlines() if "Peak:" in l][-1].strip()
     print("true peak after encoding:", peak)
+    # The final length must match the frames: -shortest would silently cut to a short soundtrack.
+    want = len(os.listdir(f"{WORK}/frames")) / FPS
+    got = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", out_mp4],
+                               capture_output=True, text=True).stdout)
+    assert abs(got - want) <= 1.5 / FPS, f"{out_mp4} is {got:.3f} s, expected {want:.3f} s"
 
 def contact_sheet(mp4, out_jpg, n=12):
     """Sheet the FINAL MP4, not the frames, so encode problems show too."""

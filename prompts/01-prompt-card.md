@@ -1,12 +1,13 @@
 # Prompt card
 
-A short prompt that worked for short teaching clips. Fill in the brackets and paste it into a coding agent that can run a headless browser and ffmpeg.
+A short prompt that worked for short teaching clips. Fill in the brackets and paste it into a coding agent that has a shell, Python or Node, and ffmpeg (plus a headless browser if it draws in HTML).
 
 ```
 Make a [15–30 second] video about [topic] for [who it's for].
 [Style: e.g. flat shapes, chalkboard, blueprint].
 [Attach a PDF or handout, or say "use what you know"].
-Captions, no narration.
+Captions, no narration. Go all out.
+Done means [a new viewer can explain the idea after one watch].
 ```
 
 ## Why each part is there
@@ -16,6 +17,8 @@ Captions, no narration.
 - **Style:** one phrase is enough; the agent fills in the rest.
 - **Source:** a handout keeps facts grounded in what you actually teach.
 - **Captions, no narration:** narration made every piece take much longer; captions-only pieces were consistently the fastest.
+- **Go all out:** without permission to go big, agents default to a safe, thin first draft.
+- **Done means:** gives you and the agent one test for every review.
 
 ## What to add for a second try
 

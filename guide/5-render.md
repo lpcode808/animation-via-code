@@ -34,6 +34,9 @@ Match carefully: `pgrep -f '[r]ender.mjs'` (the bracket stops it matching its ow
 **ESM scripts can't find a globally installed package.**
 `import` ignores `NODE_PATH`. Symlink `node_modules` into the folder you run from.
 
+**A 20-second render came out 6 seconds long.**
+The audio length was hard-coded and the mux used `-shortest`, so the video was cut to the audio with no error. Read the length from one place in picture, audio and mux, and assert the final file's length.
+
 **Scripts lost their execute bit.**
 Shared folders may drop permissions. Run with `bash script.sh` rather than `./script.sh`.
 

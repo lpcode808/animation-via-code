@@ -16,7 +16,8 @@ const probe = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
 await probe.goto(url);
 await probe.waitForFunction(() => window.__ready);
 const duration = await probe.evaluate(() => window.DURATION);
-writeFileSync('cues.json', JSON.stringify(await probe.evaluate(() => window.__cues), null, 1));
+// One length for picture, audio and mux: audio.py reads duration from here.
+writeFileSync('cues.json', JSON.stringify({ duration, fps: FPS, cues: await probe.evaluate(() => window.__cues) }, null, 1));
 await probe.close();
 
 const total = Math.round(duration * FPS);

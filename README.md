@@ -36,11 +36,15 @@ The key idea: **each frame is a pure function of time.** `renderAt(t)` must draw
 
 ## Start here
 
-1. **Try it with a prompt.** Paste the [prompt card](prompts/01-prompt-card.md) into a coding agent that can run a browser and ffmpeg, filling in your topic. Expect 10 to 20 minutes for a 20 to 30 second clip.
+1. **Try it with a prompt.** Paste the [prompt card](prompts/01-prompt-card.md) into a coding agent that has a shell and ffmpeg, filling in your topic. Expect 10 to 20 minutes for a 20 to 30 second clip.
 2. **Watch and read the demos.** [`demos/`](demos/) has three short videos with their full source: a bouncing ball, a Pythagorean proof whose on-screen area is computed and checked, and a water cycle that loops with no seam.
 3. **Run the template.** [`template/`](template/) is a simpler 6-second browser version of the bouncing ball: one HTML scene, a render script, a synth soundtrack and a mux step, in about 200 lines. Its audio, mux and contact-sheet steps and the scene's logic have been tested, but the browser render itself hasn't been run yet, so expect to fix small things.
 4. **Read the guide before your second video.** [The guide](guide/) is filed by stage: plan, pick a renderer, build the scene on one clock, sound, render, review, legibility and companion pages. Each stage has its lessons and then the bugs that cost time there.
 5. **Steal a prompt.** [prompts/](prompts/) has short demo prompts, a review-pass prompt, a long one-shot "single HTML film" prompt, and a brief for turning a video of yourself talking into a motion-graphics edit.
+
+## If you're an agent asked to use this repo
+
+Don't read the whole guide up front. Read the [prompt card](prompts/01-prompt-card.md) and [1. Plan the piece](guide/1-plan.md), and show your user a beat list before drawing. Then copy the demo closest in length (the [water cycle](demos/water_cycle.py) is 20 s) to `demos/<topic>.py`, keeping its `DURATION`, `draw`, `checks` and `soundtrack`, check a few stills, and run `python3 build.py <topic>` from `demos/`. Review as [6. Check it's right, then review](guide/6-review.md) says, and open the other stages only when something breaks. Done means the MP4, its contact sheet, checks that pass, a list of what you guessed at, and a plain note that no person has watched or listened to it yet.
 
 ## Running the template
 
@@ -49,10 +53,11 @@ Needs Node 18+, Python 3 with numpy, and ffmpeg. Not yet run end to end in a bro
 ```bash
 cd template
 npm install            # installs Playwright
-npx playwright install chromium
-node render.mjs        # writes frames/ (180 JPEGs)
-python3 audio.py       # writes audio.wav
-bash mux.sh            # writes out.mp4
+npx playwright install --with-deps chromium
+node render.mjs        # writes frames/ (180 JPEGs) and cues.json
+python3 audio.py       # writes audio.wav, as long as the scene
+bash mux.sh            # writes out.mp4 and checks its length
+bash contact.sh        # writes contact.jpg, 12 stills for review
 ```
 
 ## A caution on using these notes

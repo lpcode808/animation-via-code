@@ -3,7 +3,7 @@
 When you have a folder of helpers (a renderer, a timeline module, a character, a style guide), the prompt can be very short because the kit carries the rules.
 
 ```
-Read GUIDE.md first. Then make a 15 second video of [character] doing
+Read [your kit's guide] first. Then make a 15 second video of [character] doing
 [one action], using the kit's timeline and render script. Show me a
 contact sheet before rendering the full video.
 ```

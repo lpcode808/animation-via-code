@@ -13,15 +13,27 @@ Three short videos, each drawn frame by frame in Python with [skia-python](https
 Needs Python 3 with `numpy` and `skia-python`, and ffmpeg. On Ubuntu, skia also needs the EGL library even for CPU rendering.
 
 ```bash
-pip install numpy skia-python
+git clone https://github.com/lpcode808/animation-via-code.git && cd animation-via-code
 sudo apt-get install -y libegl1 ffmpeg fonts-dejavu-core   # skia needs EGL; the demos draw in DejaVu Sans
+python3 -m venv .venv && . .venv/bin/activate              # newer Ubuntu and Debian refuse a plain pip install
+pip install numpy skia-python
 cd demos
 python3 build.py bouncing_ball        # or pythagorean_proof, water_cycle
 ```
 
 `build.py` runs the checks, renders the frames on four workers (resumable: frames already on disk are skipped), writes the soundtrack, joins them into `<name>.mp4` with loudness normalized and peaks limited, prints the true peak measured in the final file, and makes `<name>-sheet.jpg`, a 4×3 contact sheet taken from the final MP4.
 
+Building writes over the `<name>.mp4` and `<name>-sheet.jpg` that ship in this folder.
+
 Frames are cached in `work/<name>`, so after you change a scene's `draw()`, delete that folder or the old frames are reused.
+
+To look at one moment before rendering everything, save a full-size still (here, 4.5 s into the water cycle):
+
+```bash
+python3 -c "import common; common.still('water_cycle', 4.5, 'still.png')"
+```
+
+The demos draw captions at 64 px; the [legibility stage](../guide/7-craft.md) suggests about 74 px for new pieces.
 
 On a small cloud container each rendered at roughly 30 to 50 frames per second per worker; the 30-second proof took about six seconds. The contact sheets sample the video evenly, so a tile can catch a caption mid-fade; for review, pick the moments when each beat has settled.
 

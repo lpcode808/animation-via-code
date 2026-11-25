@@ -5,13 +5,13 @@ The whole browser pipeline in five small files. The scene's logic has been check
 | File | Job |
 |---|---|
 | `scene.html` | Draws any frame with `renderAt(t)`; also lists sound cues |
-| `render.mjs` | Opens the scene in headless Chromium, screenshots every frame, writes `cues.json` |
+| `render.mjs` | Opens the scene in headless Chromium, captures every frame, writes `cues.json` (duration and sound cues) |
 | `audio.py` | Writes `audio.wav`: a pad on a 120 bpm bar grid plus bounce sounds from the cues |
-| `mux.sh` | Joins frames and audio into `out.mp4`, normalizes loudness, limits peaks, prints the true peak |
+| `mux.sh` | Joins frames and audio into `out.mp4`, normalizes loudness, limits peaks, prints the true peak, checks the length |
 | `contact.sh` | Makes `contact.jpg`, 12 stills in a 4×3 grid, for review |
 
 ```bash
-npm install && npx playwright install chromium
+npm install && npx playwright install --with-deps chromium
 node render.mjs 30 3     # fps, workers
 python3 audio.py
 bash mux.sh 30
@@ -28,4 +28,5 @@ Things to notice in the code:
 - Captions fade using each beat's own start and end, and the caption helper multiplies `globalAlpha` instead of setting it.
 - Bounce sounds are placed from the same physics that draws the ball, so they land on the right frame.
 - The pad uses detuned voices with random (seeded) starting phases so it doesn't throb.
+- The length lives in one place: `render.mjs` writes the scene's `DURATION` to `cues.json`, `audio.py` reads it, and `mux.sh` checks the final MP4 against the frame count. Change `DURATION` in `scene.html` and everything follows.
 - `mux.sh` adds a limiter after loudness normalization; without it the encoded file peaked above the −2 dBFS target in testing.

@@ -153,6 +153,8 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 .caught h3 { font-size: 1.15rem; margin-bottom: var(--s3); }
 .caught ul { margin: 0; padding-left: 1.2em; }
 .caught li { margin-bottom: var(--s2); max-width: 70ch; }
+.caught.agent { background: var(--paper-2); }
+.caught.agent p { margin: 0; }
 
 /* ---------- start here ---------- */
 .steps { list-style: none; padding: 0; margin: 0; max-width: 62rem; }
@@ -369,12 +371,16 @@ footer li { margin-bottom: var(--s2); }
       <p class="kicker">Start here</p>
       <h2>Five steps, in the order they pay off.</h2>
       <ol class="steps">
-        <li><span class="n">1</span><div><h3><a href="#prompts">Try it with a prompt</a></h3><p>Paste the prompt card into a coding agent that can run a browser and ffmpeg, with your topic filled in. Expect 10 to 20 minutes for a 20 to 30 second clip.</p></div></li>
+        <li><span class="n">1</span><div><h3><a href="#prompts">Try it with a prompt</a></h3><p>Paste the prompt card into a coding agent that has a shell and ffmpeg, with your topic filled in. Expect 10 to 20 minutes for a 20 to 30 second clip.</p></div></li>
         <li><span class="n">2</span><div><h3><a href="#demos">Watch and read the demos</a></h3><p>Three short videos with their full source, each with a check that runs before any frame renders.</p></div></li>
         <li><span class="n">3</span><div><h3><a href="https://github.com/lpcode808/animation-via-code/tree/main/template">Run the template</a></h3><p>A 6-second browser version of the bouncing ball in about 200 lines: one HTML scene, a render script, a synth soundtrack and a mux step. Its browser render hasn't been run yet, so expect to fix small things.</p></div></li>
         <li><span class="n">4</span><div><h3><a href="#guide">Read the guide before your second video</a></h3><p>Filed by stage, from planning to companion pages. Each stage has its lessons, then the bugs that cost time there.</p></div></li>
         <li><span class="n">5</span><div><h3><a href="#prompts">Steal a prompt</a></h3><p>Demo prompts, a review pass, a long one-shot film prompt, and a brief for turning a video of yourself talking into a motion-graphics edit.</p></div></li>
       </ol>
+      <div class="caught agent">
+        <h3>If you're an agent asked to use this repo</h3>
+        <p>Don't read the whole guide up front. Read the prompt card and <a href="{{GH}}guide/1-plan.md">stage 1</a>, and show your user a beat list before drawing. Copy the demo closest in length to <code>demos/&lt;topic&gt;.py</code>, keeping its <code>DURATION</code>, <code>draw</code>, <code>checks</code> and <code>soundtrack</code>, check a few stills, and run <code>python3 build.py &lt;topic&gt;</code>. Review as <a href="{{GH}}guide/6-review.md">stage 6</a> says. Done means the MP4, its contact sheet, checks that pass, a list of what you guessed at, and a note that no person has watched it yet.</p>
+      </div>
     </div>
   </section>
 
@@ -389,7 +395,7 @@ footer li { margin-bottom: var(--s2); }
             <div class="label"><span>The prompt card</span><button class="copy" id="copy" type="button">Copy</button></div>
             <pre id="cardtext">{{CARD}}</pre>
           </div>
-          <p>Fill in the brackets and paste it into a coding agent that can run a headless browser and ffmpeg. Captions-only pieces were consistently the fastest; narration made every piece take much longer.</p>
+          <p>Fill in the brackets and paste it into a coding agent that has a shell and ffmpeg. Captions-only pieces were consistently the fastest; narration made every piece take much longer.</p>
         </div>
         <ul class="plist">
 {{PROMPTS}}
@@ -424,23 +430,25 @@ footer li { margin-bottom: var(--s2); }
         <div>
           <h3>The demos (tested)</h3>
           <p>Python 3 with numpy and skia-python, plus ffmpeg. On Ubuntu, skia needs the EGL library even for CPU rendering.</p>
-          <div class="cmd"><pre><span class="c"># install</span>
-pip install numpy skia-python
+          <div class="cmd"><pre>git clone https://github.com/lpcode808/animation-via-code.git
+cd animation-via-code
 sudo apt-get install -y libegl1 ffmpeg fonts-dejavu-core
-<span class="c"># render one</span>
+python3 -m venv .venv &amp;&amp; . .venv/bin/activate
+pip install numpy skia-python
 cd demos
 python3 build.py bouncing_ball</pre></div>
-          <p>Frames are cached in <code>work/&lt;name&gt;</code>. Delete that folder after changing a scene's <code>draw()</code>, or the old frames are reused.</p>
+          <p>Building writes over the shipped MP4 and contact sheet. Frames are cached in <code>work/&lt;name&gt;</code>; delete that folder after changing a scene's <code>draw()</code>, or the old frames are reused.</p>
         </div>
         <div>
           <h3>The template (browser)</h3>
           <p>Node 18+, Python 3 with numpy, and ffmpeg. Not yet run end to end in a browser; if a step fails, the demos are the tested version of the same idea.</p>
           <div class="cmd"><pre>cd template
 npm install
-npx playwright install chromium
-node render.mjs     <span class="c"># 180 frames</span>
+npx playwright install --with-deps chromium
+node render.mjs     <span class="c"># frames + cues.json</span>
 python3 audio.py    <span class="c"># audio.wav</span>
-bash mux.sh         <span class="c"># out.mp4</span></pre></div>
+bash mux.sh         <span class="c"># out.mp4, length checked</span>
+bash contact.sh     <span class="c"># contact.jpg</span></pre></div>
         </div>
       </div>
     </div>

@@ -36,6 +36,8 @@ A teaching video can look finished and still be wrong. In this collection, two s
 
 The single biggest quality lever was **a fresh reviewer.** (confirmed) After the first full render, start a new agent with no context, give it the video's contact sheets and caption list, and ask it to play two roles: someone seeing this for the first time, and a teacher of the subject. Ask for the top 5 problems only. It found real issues in every piece where it was tried; one first-time-reader pass on a 45-second piece listed 14 confusions.
 
+**If you can't start a fresh reviewer, hand it over.** (tentative) An agent working alone can't review its own video as if it were new. It should give the user the [review prompt](../prompts/04-review-pass.md), the contact sheet and the caption list to run elsewhere, rather than call its own pass fresh.
+
 Cheaper checks that each caught real bugs at least once (most held up across many pieces; caption timing is [contested](appendix.md#where-the-notes-disagree)):
 
 - **Contact sheet:** 12 stills in a 4×3 grid, taken at moments when each beat has settled, not mid-transition.

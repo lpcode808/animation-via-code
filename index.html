@@ -153,6 +153,8 @@ h3 { font-size: 1.35rem; font-weight: 700; }
 .caught h3 { font-size: 1.15rem; margin-bottom: var(--s3); }
 .caught ul { margin: 0; padding-left: 1.2em; }
 .caught li { margin-bottom: var(--s2); max-width: 70ch; }
+.caught.agent { background: var(--paper-2); }
+.caught.agent p { margin: 0; }
 
 /* ---------- start here ---------- */
 .steps { list-style: none; padding: 0; margin: 0; max-width: 62rem; }
@@ -369,12 +371,16 @@ footer li { margin-bottom: var(--s2); }
       <p class="kicker">Start here</p>
       <h2>Five steps, in the order they pay off.</h2>
       <ol class="steps">
-        <li><span class="n">1</span><div><h3><a href="#prompts">Try it with a prompt</a></h3><p>Paste the prompt card into a coding agent that can run a browser and ffmpeg, with your topic filled in. Expect 10 to 20 minutes for a 20 to 30 second clip.</p></div></li>
+        <li><span class="n">1</span><div><h3><a href="#prompts">Try it with a prompt</a></h3><p>Paste the prompt card into a coding agent that has a shell and ffmpeg, with your topic filled in. Expect 10 to 20 minutes for a 20 to 30 second clip.</p></div></li>
         <li><span class="n">2</span><div><h3><a href="#demos">Watch and read the demos</a></h3><p>Three short videos with their full source, each with a check that runs before any frame renders.</p></div></li>
         <li><span class="n">3</span><div><h3><a href="https://github.com/lpcode808/animation-via-code/tree/main/template">Run the template</a></h3><p>A 6-second browser version of the bouncing ball in about 200 lines: one HTML scene, a render script, a synth soundtrack and a mux step. Its browser render hasn't been run yet, so expect to fix small things.</p></div></li>
         <li><span class="n">4</span><div><h3><a href="#guide">Read the guide before your second video</a></h3><p>Filed by stage, from planning to companion pages. Each stage has its lessons, then the bugs that cost time there.</p></div></li>
         <li><span class="n">5</span><div><h3><a href="#prompts">Steal a prompt</a></h3><p>Demo prompts, a review pass, a long one-shot film prompt, and a brief for turning a video of yourself talking into a motion-graphics edit.</p></div></li>
       </ol>
+      <div class="caught agent">
+        <h3>If you're an agent asked to use this repo</h3>
+        <p>Don't read the whole guide up front. Read the prompt card and <a href="https://github.com/lpcode808/animation-via-code/blob/main/guide/1-plan.md">stage 1</a>, and show your user a beat list before drawing. Copy the demo closest in length to <code>demos/&lt;topic&gt;.py</code>, keeping its <code>DURATION</code>, <code>draw</code>, <code>checks</code> and <code>soundtrack</code>, check a few stills, and run <code>python3 build.py &lt;topic&gt;</code>. Review as <a href="https://github.com/lpcode808/animation-via-code/blob/main/guide/6-review.md">stage 6</a> says. Done means the MP4, its contact sheet, checks that pass, a list of what you guessed at, and a note that no person has watched it yet.</p>
+      </div>
     </div>
   </section>
 
@@ -390,9 +396,10 @@ footer li { margin-bottom: var(--s2); }
             <pre id="cardtext">Make a [15–30 second] video about [topic] for [who it&#x27;s for].
 [Style: e.g. flat shapes, chalkboard, blueprint].
 [Attach a PDF or handout, or say &quot;use what you know&quot;].
-Captions, no narration.</pre>
+Captions, no narration. Go all out.
+Done means [a new viewer can explain the idea after one watch].</pre>
           </div>
-          <p>Fill in the brackets and paste it into a coding agent that can run a headless browser and ffmpeg. Captions-only pieces were consistently the fastest; narration made every piece take much longer.</p>
+          <p>Fill in the brackets and paste it into a coding agent that has a shell and ffmpeg. Captions-only pieces were consistently the fastest; narration made every piece take much longer.</p>
         </div>
         <ul class="plist">
 <li><a href="https://github.com/lpcode808/animation-via-code/blob/main/prompts/01-prompt-card.md">Prompt card</a><span>The short prompt on the left, with why each line is there and what to add on a second try.</span></li>
@@ -410,7 +417,7 @@ Captions, no narration.</pre>
     <div class="fr"><span>05</span>GUIDE</div>
     <div class="cell">
       <p class="kicker">The guide, by stage</p>
-      <h2>78 lessons and 28 pitfalls, filed where you'll hit them.</h2>
+      <h2>79 lessons and 29 pitfalls, filed where you'll hit them.</h2>
       <p>Open a stage to see its lessons in one line each. The full text, with the examples behind each one, is in the repo.</p>
       <div class="tags">
         <span><span class="tag tag-confirmed">confirmed</span> held up across many pieces</span>
@@ -518,7 +525,7 @@ Captions, no narration.</pre>
   <summary>
     <span class="sn">05</span>
     <span class="sname">Render at scale</span>
-    <span class="scount">6 lessons · 5 pitfalls</span>
+    <span class="scount">6 lessons · 6 pitfalls</span>
   </summary>
   <div class="sbody">
     <p class="sintro">Turn the scene into thousands of frames and one MP4 without babysitting it.</p>
@@ -528,7 +535,7 @@ Captions, no narration.</pre>
 <li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Run it detached.</span> <span class="ls">Long renders die when the agent's shell is recycled.</span></span></li>
 <li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Encode for everywhere.</span> <span class="ls">H.264, <code>yuv420p</code>, <code>+faststart</code>.</span></span></li>
 <li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Local hardware changes the rules.</span> <span class="ls">Everything here was tuned in a cloud sandbox (about 2 cores, no GPU, a network allowlist).</span></span></li></ul>
-    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>The first frames use the wrong font</li><li>A long render dies when the session goes idle</li><li><code>pkill render</code> killed the agent's own shell, or <code>pgrep</code> found itself</li><li>ESM scripts can't find a globally installed package</li><li>Scripts lost their execute bit</li></ul></div>
+    <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>The first frames use the wrong font</li><li>A long render dies when the session goes idle</li><li><code>pkill render</code> killed the agent's own shell, or <code>pgrep</code> found itself</li><li>ESM scripts can't find a globally installed package</li><li>A 20-second render came out 6 seconds long</li><li>Scripts lost their execute bit</li></ul></div>
     <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/5-render.md">Read stage 5 in full</a>
   </div>
 </details>
@@ -537,7 +544,7 @@ Captions, no narration.</pre>
   <summary>
     <span class="sn">06</span>
     <span class="sname">Check it's right, then review</span>
-    <span class="scount">12 lessons · 3 pitfalls</span>
+    <span class="scount">13 lessons · 3 pitfalls</span>
   </summary>
   <div class="sbody">
     <p class="sintro">Check the content first, then the frames, then ask someone who wasn't there.</p>
@@ -552,7 +559,8 @@ Captions, no narration.</pre>
 <li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Label reconstructions.</span> <span class="ls">When a piece mixes real records (real titles, real data) with drawn stand-ins, say which parts are reconstructed.</span></span></li>
 <li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Beauty can hide a missing explanation.</span> <span class="ls">One piece was judged "too pretty, under-explained".</span></span></li>
 <li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">Hedge claims you can't check.</span> <span class="ls">Cultural and current-events claims get softer wording or a source on screen.</span></span></li>
-<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Read the video, don't watch it.</span> <span class="ls">An agent can't watch video efficiently: about 20 minutes of footage costs tens of millions of tokens as frames, and around ten thousand as a word-level transcript.</span></span></li></ul>
+<li class="lesson"><span class="tag tag-confirmed" title="confirmed">confirmed</span><span class="lx"><span class="lt">Read the video, don't watch it.</span> <span class="ls">An agent can't watch video efficiently: about 20 minutes of footage costs tens of millions of tokens as frames, and around ten thousand as a word-level transcript.</span></span></li>
+<li class="lesson"><span class="tag tag-tentative" title="tentative">tentative</span><span class="lx"><span class="lt">If you can't start a fresh reviewer, hand it over.</span> <span class="ls">An agent working alone can't review its own video as if it were new.</span></span></li></ul>
     <div class="pits"><h4>Pitfalls that cost time here</h4><ul><li>A word count or quote is wrong</li><li>"Nothing changed" but the file is new</li><li><code>console.assert</code> or <code>console.table</code> is missing</li></ul></div>
     <a class="more" href="https://github.com/lpcode808/animation-via-code/blob/main/guide/6-review.md">Read stage 6 in full</a>
   </div>
@@ -613,23 +621,25 @@ Captions, no narration.</pre>
         <div>
           <h3>The demos (tested)</h3>
           <p>Python 3 with numpy and skia-python, plus ffmpeg. On Ubuntu, skia needs the EGL library even for CPU rendering.</p>
-          <div class="cmd"><pre><span class="c"># install</span>
-pip install numpy skia-python
+          <div class="cmd"><pre>git clone https://github.com/lpcode808/animation-via-code.git
+cd animation-via-code
 sudo apt-get install -y libegl1 ffmpeg fonts-dejavu-core
-<span class="c"># render one</span>
+python3 -m venv .venv &amp;&amp; . .venv/bin/activate
+pip install numpy skia-python
 cd demos
 python3 build.py bouncing_ball</pre></div>
-          <p>Frames are cached in <code>work/&lt;name&gt;</code>. Delete that folder after changing a scene's <code>draw()</code>, or the old frames are reused.</p>
+          <p>Building writes over the shipped MP4 and contact sheet. Frames are cached in <code>work/&lt;name&gt;</code>; delete that folder after changing a scene's <code>draw()</code>, or the old frames are reused.</p>
         </div>
         <div>
           <h3>The template (browser)</h3>
           <p>Node 18+, Python 3 with numpy, and ffmpeg. Not yet run end to end in a browser; if a step fails, the demos are the tested version of the same idea.</p>
           <div class="cmd"><pre>cd template
 npm install
-npx playwright install chromium
-node render.mjs     <span class="c"># 180 frames</span>
+npx playwright install --with-deps chromium
+node render.mjs     <span class="c"># frames + cues.json</span>
 python3 audio.py    <span class="c"># audio.wav</span>
-bash mux.sh         <span class="c"># out.mp4</span></pre></div>
+bash mux.sh         <span class="c"># out.mp4, length checked</span>
+bash contact.sh     <span class="c"># contact.jpg</span></pre></div>
         </div>
       </div>
     </div>
