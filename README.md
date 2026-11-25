@@ -1,16 +1,16 @@
 # Animation via code
 
-**[Browse it as a page](https://lpcode808.github.io/animation-via-code/)**: the demos, every lesson in one line, and the prompts.
+**[Browse it as a page](https://lpcode808.github.io/animation-via-code/)**: the demos, a layer-by-layer view of one scene, every lesson in one line, and the prompts.
 
 Short explainer videos made by asking an AI coding agent to *write code that draws every frame*, instead of asking an image or video model to generate pixels.
 
-This repo collects what was learned making a few dozen of these pieces (mostly 15 seconds to 3 minutes: science explainers, music lessons, product walkthroughs, talk translations, trailers). It is a set of notes, prompts, a tiny template and three small demos, not a framework.
+This repo collects what was learned making a few dozen of these pieces (mostly 15 seconds to 3 minutes: science explainers, music lessons, product walkthroughs, talk translations, trailers). It holds notes, prompts, a small template and three short demos.
 
 > Lessons are marked **confirmed** (held up across many pieces), **tentative** (seen once or twice) or **contested** (sources disagree). See [where the notes disagree](guide/appendix.md#where-the-notes-disagree).
 
 ## Why code instead of a video model
 
-A video model *grows* a clip: fast, beautiful, and hard to correct. Code *builds* one: every shape, number and caption is exact, editable and repeatable.
+A video model is quick and often good-looking, but hard to correct: asking for a fix usually gets you a different clip. With code, every shape, number and caption is exact and can be changed.
 
 That matters for teaching. If a caption says "3 + 4 = 7", the diagram can be checked against it. If a reviewer says "the arrow points the wrong way", you change one line and re-render, and every other frame stays the same.
 
