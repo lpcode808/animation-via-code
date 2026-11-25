@@ -863,7 +863,8 @@ bash contact.sh     <span class="c"># contact.jpg</span></pre></div>
     { key: 'caption', name: 'Caption', clips: BEATS.map(b => ({ a: b.start, b: b.end, label: b.caption })) },
     { key: 'ball', name: 'Ball', clips: [
         { a: 0, b: DROP_AT, label: 'hold' }, { a: DROP_AT, b: bounces[0], label: 'fall' },
-        { a: bounces[0], b: bounces.rest, label: bounces.length + ' bounces' }, { a: bounces.rest, b: DURATION, label: 'rest' } ] },
+        { a: bounces[0], b: Math.min(bounces.rest, DURATION), label: bounces.length + ' bounces' },
+        ...(bounces.rest < DURATION ? [{ a: bounces.rest, b: DURATION, label: 'rest' }] : []) ] },
     { key: 'shadow', name: 'Shadow', clips: [{ a: 0, b: DURATION, label: 'follows the ball' }] },
     { key: 'floor', name: 'Floor', clips: [{ a: 0, b: DURATION, label: 'static' }] },
     { key: 'paper', name: 'Paper', clips: [{ a: 0, b: DURATION, label: 'static' }] },
